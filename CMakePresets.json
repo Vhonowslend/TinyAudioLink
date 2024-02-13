@@ -1,0 +1,55 @@
+{
+	"version": 6,
+	"cmakeMinimumRequired": {
+		"major": 3,
+		"minor": 26,
+		"patch": 0
+	},
+	"configurePresets": [
+		{
+			"name": "teensy41",
+			"description": "Build for Teensy 4.1 with ARMv7E-M architecture.",
+			"binaryDir": "${sourceDir}/build/teensy41",
+			"installDir": "${sourceDir}/build/teensy41/bin",
+			"cacheVariables": {
+				"BOARD_NAME": "Teensy 4.1",
+				"CMAKE_SYSTEM_NAME": "Generic",
+				"CMAKE_SYSTEM_PROCESSOR": "ARMv7E-M",
+				"CMAKE_CROSSCOMPILING": "ON",
+				"CMAKE_C_COMPILER_TARGET": "thumbv7em-none-unknown-eabihf",
+				"CMAKE_CXX_COMPILER_TARGET": "thumbv7em-none-unknown-eabihf",
+				"CMAKE_C_FLAGS": "-mcpu=cortex-m7 -mfpu=fpv5-d16 -mfloat-abi=hard",
+				"CMAKE_CXX_FLAGS": "-mcpu=cortex-m7 -mfpu=fpv5-d16 -mfloat-abi=hard",
+				"CMAKE_VERBOSE_MAKEFILE": "ON"
+			},
+			"hidden": true
+		},
+		{
+			"inherits": "teensy41",
+			"name": "teensy41-llvmarm",
+			"toolchainFile": "${sourceDir}/cmake/toolchains/llvm-arm.cmake",
+			"hidden": true
+		},
+		{
+			"inherits": "teensy41-llvmarm",
+			"name": "teensy41-llvmarm-ninja",
+			"displayName": "Teensy 4.1 (LLVM/Clang for ARM, Ninja Multi-Config)",
+			"generator": "Ninja Multi-Config"
+		},
+		{
+			"inherits": "teensy41",
+			"name": "teensy41-llvm",
+			"toolchainFile": "${sourceDir}/cmake/toolchains/llvm.cmake",
+			"cacheVariables": {
+				"CMAKE_TOOLCHAIN_FILE": "${sourceDir}/cmake/toolchains/llvm.cmake"
+			},
+			"hidden": true
+		},
+		{
+			"inherits": "teensy41-llvm",
+			"name": "teensy41-llvm-ninja",
+			"displayName": "Teensy 4.1 (LLVM/Clang, Ninja Multi-Config)",
+			"generator": "Ninja Multi-Config"
+		}
+	]
+}
