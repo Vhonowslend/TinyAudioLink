@@ -18,15 +18,17 @@
 #include <cstddef>
 #include "imxrt1060/gpio.hpp"
 
-extern "C" [[gnu::used]] int main()
+extern "C" [[gnu::used]]
+int main()
 {
-	gpio::GPIO2.direction  = 0xFFFFFFFF;
-	gpio::GPIO2.data       = 0xFFFFFFFF;
-	gpio::GPIO2.dataToggle = 0xFFFFFFFF;
+	gpio::GPIO2.direction = 0xFFFFFFFF;
+	gpio::GPIO2.data      = 0xFFFFFFFF;
+	while (true) {
+		gpio::GPIO2.dataToggle = 0xFFFFFFFF;
 
-	for (std::size_t i = 0; i < 0x11E1A300; i++) {
-		i++;
+		for (std::size_t i = 0; i < 0x11E1A300; i++) {
+			i++;
+		}
 	}
-
 	return 0;
 }

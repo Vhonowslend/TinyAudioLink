@@ -99,6 +99,7 @@ BreakConstructorInitializers: BeforeColon
 BreakStringLiterals: true
 ConstructorInitializerAllOnOneLineOrOnePerLine: false
 Cpp11BracedListStyle: true
+BreakAfterAttributes: Always
 
 # Spaces
 SpaceAfterCStyleCast: false
