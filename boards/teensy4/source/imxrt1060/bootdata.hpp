@@ -15,19 +15,17 @@
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #pragma once
-#ifndef TEENSY41_BOOTDATA_H
-#define TEENSY41_BOOTDATA_H
+#include <cinttypes>
+#include <cstddef>
 
 // This is critical, so ensure it's byte aligned.
 #pragma pack(push, 1)
 
-#include <cinttypes>
-
 extern "C" {
 // Start of the Flash image.
-static uint32_t __flashImageStart;
+static std::size_t __flashImageStart;
 // Length of the entire flash image.
-static uint32_t __flashImageLength;
+static std::size_t __flashImageLength;
 }
 
 /** Boot Data
@@ -35,13 +33,13 @@ static uint32_t __flashImageLength;
  * 
  */
 struct bootData_t {
-	// Absolute address of the image.
-	void* start = (void*)&__flashImageStart;
-	// Length of the image.
-	uint32_t length = (uint32_t)&__flashImageLength;
-	// Plugin flags, see 8.8
-	uint32_t plugin = 0;
+	// 0x00 Absolute address of the image.
+	std::size_t start = reinterpret_cast<std::size_t>(&__flashImageStart);
+	// 0x04 Length of the image.
+	std::size_t length = reinterpret_cast<std::size_t>(&__flashImageLength);
+	// 0x08 Plugin flags, see 8.8
+	uint32_t plugin = 0; // Some official images have a value here.
 };
+static constexpr std::size_t bootData_sz = 0xC;
 
 #pragma pack(pop)
-#endif

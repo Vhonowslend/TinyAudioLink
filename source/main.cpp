@@ -14,7 +14,19 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-[[gnu::used]] int main()
+#include <cinttypes>
+#include <cstddef>
+#include "imxrt1060/gpio.hpp"
+
+extern "C" [[gnu::used]] int main()
 {
+	gpio::GPIO2.direction  = 0xFFFFFFFF;
+	gpio::GPIO2.data       = 0xFFFFFFFF;
+	gpio::GPIO2.dataToggle = 0xFFFFFFFF;
+
+	for (std::size_t i = 0; i < 0x11E1A300; i++) {
+		i++;
+	}
+
 	return 0;
 }

@@ -30,14 +30,17 @@ set(BOARD_ERAM "0x70000000")
 if(BOARD_VERSION STREQUAL "4\.1")
 	set(BOARD_LINK_VERSION "41")
 	set(BOARD_FLASH_SIZE "7936K")
+	set(BOARD_FLASH_SIZE_FULL "8388608")
 	set(BOARD_ERAM_SIZE "16384K")
 elseif(BOARD_VERSION MATCHES "4(\.0)?")
 	set(BOARD_LINK_VERSION "40")
 	set(BOARD_FLASH_SIZE "1984K")
+	set(BOARD_FLASH_SIZE_FULL "2097152")
 	set(BOARD_ERAM_SIZE "0K")
 elseif(BOARD_VERSION STREQUAL "M(icro)?M(od)?")
 	set(BOARD_LINK_VERSION "MM")
 	set(BOARD_FLASH_SIZE "16128K")
+	set(BOARD_FLASH_SIZE_FULL "16777216")
 	set(BOARD_ERAM_SIZE "0K")
 else()
 	message(FATAL_ERROR "This board (Teensy ${BOARD_VERSION}) is not yet supported. Add support for it and contribute to the project!")
@@ -65,9 +68,8 @@ target_sources(${BOARD_LIB_NAME}
 
 # Add Include Directories
 target_include_directories(${BOARD_LIB_NAME}
-	PRIVATE
-		"source"
 	PUBLIC
+		"source"
 		"include"
 )
 
@@ -107,6 +109,10 @@ target_link_options(${BOARD_LIB_NAME}
 	INTERFACE
 		"-T" "${CMAKE_CURRENT_BINARY_DIR}/layout.ld"
 )
+target_compile_definitions(${BOARD_LIB_NAME}
+	PRIVATE
+		TEENSY_FLASH_SIZE=${BOARD_FLASH_SIZE_FULL}
+)
 
 set_target_properties(${BOARD_LIB_NAME} PROPERTIES
 	# Set C++ Standard and Extensions
@@ -144,9 +150,14 @@ function(configure_board TARGET)
 	target_sources(${TARGET} PRIVATE $<TARGET_OBJECTS:Teensy>)
 	target_link_libraries(${TARGET} PRIVATE
 #		$<TARGET_OBJECTS:Teensy>
+		"Teensy"
 	)
 	target_link_options(${TARGET} PRIVATE
-		${_INTERFACE_LINK_OPTIONS}		
+		"$<TARGET_PROPERTY:Teensy,INTERFACE_LINK_OPTIONS>"
+		#${_INTERFACE_LINK_OPTIONS}		
+	)
+	target_include_directories(${TARGET} PRIVATE
+		"$<TARGET_PROPERTY:Teensy,INTERFACE_INCLUDE_DIRECTORIES>"
 	)
 
 	# Post-processing so it can actually be run.

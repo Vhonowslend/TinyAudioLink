@@ -39,6 +39,8 @@ SECTIONS
 {
 	.text.headers : {
 		. = ORIGIN(FLASH);
+		__flashImageStart = .;
+
 		KEEP(*(.flashLoader))	
 
 		/* Image Vector Table
@@ -49,14 +51,14 @@ SECTIONS
 		 * - SD/MMC/...: 0x400 (1KB, loads 4KB only)
 		 * - FlexSPI NAND: 0x400 (1KB, loads 4KB only)
 		 */
-		FILL(0xFEEDDEAD): . = ORIGIN(FLASH) + 0x1000;
+		FILL(0xFFFFFFFF): . = ORIGIN(FLASH) + 0x1000;
 		KEEP(*(.imageVectorTable))
 		KEEP(*(.bootData))
 	} > FLASH
 
 	.text.code : {
 		/* Ensure we are aligned to a page */
-		FILL(0xFEEDDEAD): . = ALIGN(4096);
+		FILL(0xFFFFFFFF): . = ALIGN(4096);
 
 		KEEP(*(.startup))
 		*(.flashmem*)
@@ -72,17 +74,78 @@ SECTIONS
 
 	.text.progmem : {
 		/* Ensure we are aligned to a page */
-		FILL(0xFEEDDEAD): . = ALIGN(4096);
+		FILL(0xFFFFFFFF): . = ALIGN(4096);
 		
 		*(.progmem*)		
 	} > FLASH
 
-	/* .text.itcm : {
-	 * 	. = . + 32; /* MPU to trap NULL pointer deref * /
-	 * 	*(.fastrun)
-	 * 	*(.text*)		
-	 * } > ITCM  AT> FLASH
+	.text.itcm : {
+		/* Ensure we are aligned to a page */
+		FILL(0xFFFFFFFF): . = ALIGN(4096);
+
+		__fastCodeStart = .;
+
+		. = . + 32; /* MPU to trap NULL pointer deref * /
+
+		*(.fastCode)
+/*		*(.text*)		*/
+
+		__fastCodeEnd = .;
+		__fastCodeLength = __fastCodeEnd - __fastCodeStart;
+	} > ITCM  AT> FLASH
+	__fastCodeAddress = LOADADDR(.text.itcm);
+	
+	.data : {
+		/* Ensure we are aligned to a page */
+		FILL(0xFFFFFFFF): . = ALIGN(4096);
+
+		__fastDataStart = .;
+
+		*(SORT_BY_ALIGNMENT(SORT_BY_NAME(.rodata*)))
+		*(SORT_BY_ALIGNMENT(SORT_BY_NAME(.data*)))
+
+    	/* *(.endpoint_queue) */
+   		/* KEEP(*(.vectorsram)) */
+	} > DTCM AT> FLASH
+
+	.data.bss ALIGN(4) : {
+		*(SORT_BY_ALIGNMENT(SORT_BY_NAME(.bss*)))
+		*(SORT_BY_ALIGNMENT(SORT_BY_NAME(COMMON)))
+	} > DTCM AT> FLASH
+
+	.data.dtcm : {
+		*(SORT_BY_ALIGNMENT(SORT_BY_NAME(.fastData)))
+	} > DTCM AT> FLASH
+
+	.data.fin : {
+		/* Ensure we are aligned to a page */
+		FILL(0xFFFFFFFF): . = ALIGN(4096);
+
+		__fastDataEnd = .;
+		__fastDataLength = __fastDataEnd - __fastDataStart;
+	} > DTCM AT> FLASH
+	__fastDataAddress = LOADADDR(.data);
+
+	/DISCARD/ : {
+		*(.ARM.exidx* .ARM.extab.text* .gnu.linkonce.armexidx.*)
+	} 
+
+	.text.fin : {
+		/* Ensure we are aligned to a page */
+		FILL(0xFEEDDEAD): . = ALIGN(4096);
+
+		__flashImageEnd = .;
+		__flashImageLength = __flashImageEnd - __flashImageStart;
+	} > FLASH
+
+	/* Calculate the Intruction/Data Tightly Coupled Memory split.
+	 * - The granularity of this is only 32KiB (512K / 16).
+	 * - While DTCM and ITCM are clear, it isn't clear what OCRAM configuration is for.
+	 * - We can also mark things as unused, but really we just want the extra DTCM area for stack.
 	 */
+	__itcmBlockCount = (__fastCodeLength + 0x7FFF) >> 15;
+	__flexramBankConfig = 0xAAAAAAAA | ((1 << __itcmBlockCount * 2) - 1);
+	__stackStart = ORIGIN(DTCM) + __fastDataLength;
 
 	/* Included by Teensyduino, but unclear why. Does not seem to have a use.
 	 * 	.ARM.exidx : {
@@ -90,17 +153,6 @@ SECTIONS
 	 * 	*(.ARM.exidx* .ARM.extab.text* .gnu.linkonce.armexidx.*)
 	 * 	__exidx_end = .;
 	 * } > ITCM  AT> FLASH
-	 */
-	/DISCARD/ : {
-		*(.ARM.exidx* .ARM.extab.text* .gnu.linkonce.armexidx.*)
-	} 
-	
-	/* .data : {
-     * 	*(.endpoint_queue)    
-	 * 	*(SORT_BY_ALIGNMENT(SORT_BY_NAME(.rodata*)))
-	 * 	*(SORT_BY_ALIGNMENT(SORT_BY_NAME(.data*)))
-   	 * 	 KEEP(*(.vectorsram))
-	 * } > DTCM  AT> FLASH
 	 */
 
 	 /* .bss ALIGN(4) : {
@@ -124,30 +176,11 @@ SECTIONS
 	 * 	__text_csf_end = .;
 	 * } > FLASH
 	 */
-
-	.text.fin : {
-		/* Ensure we are aligned to a page */
-		FILL(0xFEEDDEAD): . = ALIGN(4096);
-
-		__flashImageEnd = .;
-	} > FLASH
-
-	__flashImageStart = ORIGIN(FLASH);
-	__flashImageLength = __flashImageEnd - ORIGIN(FLASH);
+	
 
 /*	_ITCM_BLOCK_COUNT = (SIZEOF(.text.itcm) + 0x7FFE) >> 15;
 	_FLEXRAM_BANK_CONFIG = 0xAAAAAAAA | ((1 << (_ITCM_BLOCK_COUNT * 2)) - 1);
 	_STACK_END = ORIGIN(DTCM) + ((16 - _ITCM_BLOCK_COUNT) << 15);
-
-	_TEXT_START = ADDR(.text.itcm);
-	_TEXT_END = ADDR(.text.itcm) + SIZEOF(.text.itcm);
-	_TEXT_LEN = SIZEOF(.text.itcm);
-	_TEXT_LOAD = LOADADDR(.text.itcm);
-	
-	_DATA_START = ADDR(.data);
-	_DATA_END = ADDR(.data) + SIZEOF(.data);
-	_DATA_LEN = SIZEOF(.data);
-	_DATA_LOAD = LOADADDR(.data);
 
 	_BSS_START = ADDR(.bss);
 	_BSS_END = ADDR(.bss) + SIZEOF(.bss);
@@ -159,14 +192,12 @@ SECTIONS
 	/* From Teensyduino */
 /*	_heap_start = ADDR(.bss.dma) + SIZEOF(.bss.dma);
 	_heap_end = ORIGIN(RAM) + LENGTH(RAM);
-
-	_flashimagelen = SIZEOF(.text.progmem) + SIZEOF(.text.itcm) + SIZEOF(.data);
-	_teensy_model_identifier = 0x24;
+ */
 
 	.debug_info     0 : { *(.debug_info) }
 	.debug_abbrev   0 : { *(.debug_abbrev) }
 	.debug_line     0 : { *(.debug_line) }
 	.debug_frame    0 : { *(.debug_frame) }
 	.debug_str      0 : { *(.debug_str) }
-	.debug_loc      0 : { *(.debug_loc) } */
+	.debug_loc      0 : { *(.debug_loc) }
 };

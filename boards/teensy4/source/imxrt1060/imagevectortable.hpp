@@ -15,9 +15,6 @@
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #pragma once
-#ifndef TEENSY41_IMAGEVECTORTABLE_H
-#define TEENSY41_IMAGEVECTORTABLE_H
-
 #include <cinttypes>
 #include "bootdata.hpp"
 
@@ -52,6 +49,6 @@ struct imageVectorTable_t {
 	// 0x1C Reserved, must be zero.
 	uint32_t __reserved2 = 0;
 }; // 0x20
+static constexpr std::size_t imageVectorTable_sz = 0x20;
 
 #pragma pack(pop)
-#endif

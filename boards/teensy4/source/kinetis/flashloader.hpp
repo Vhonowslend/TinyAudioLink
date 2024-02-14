@@ -23,6 +23,10 @@
 
 #include <inttypes.h>
 
+#ifndef TEENSY_FLASH_SIZE
+#define TEENSY_FLASH_SIZE 0x00800000
+#endif
+
 // Defaults are for loading from NAND Flash. It can support NOR Flash and SD/eMMC.
 struct flashLoader_t {
 	// 0x000 Tag
@@ -91,7 +95,7 @@ struct flashLoader_t {
 	// 0x048 Reserved
 	uint32_t __reserved3[2] = {0};
 	// 0x050 Flash Memory Size
-	uint32_t sflashA1Size = 0x00800000;
+	uint32_t sflashA1Size = TEENSY_FLASH_SIZE;
 	// 0x054
 	uint32_t sflashA2Size = 0;
 	// 0x058
@@ -246,6 +250,7 @@ struct flashLoader_t {
 	// 0x1D4 Reserved
 	uint32_t __reserved8[11] = {0};
 };
+static constexpr std::size_t falshLoader_sz = 0x200;
 
 #pragma pack(pop)
 #endif
