@@ -191,7 +191,7 @@ set_target_properties(${PROJECT_NAME} PROPERTIES
 )
 
 file(GLOB_RECURSE SOURCES FOLLOW_SYMLINKS CONFIGURE_DEPENDS "source/*")
-list(FILTER SOURCES INCLUDE REGEX ".*\.(c|h|cxx|hxx|cpp|hpp)$")
+#list(FILTER SOURCES INCLUDE REGEX ".*\.(c|h|cxx|hxx|cpp|hpp)$")
 source_group(TREE "${CMAKE_CURRENT_SOURCE_DIR}/source" PREFIX "Source Files" FILES ${TEMPLATES})
 target_sources(${PROJECT_NAME}
 	PRIVATE
@@ -204,17 +204,11 @@ target_include_directories(${PROJECT_NAME}
 )
 
 # Board Specific
-message(STATUS "${CMAKE_CXX_COMPILER_ID}, ${BOARD_NAME}")
 if((CMAKE_CXX_COMPILER_ID STREQUAL "Clang") OR (CMAKE_CXX_COMPILER_ID STREQUAL "GNU"))
 	# Teensy 4.1
-	if(BOARD_NAME EQUAL "Teensy 4.1")
-		target_link_options(${PROJECT_NAME} PUBLIC
-			"-nostdlib"
-			"--script ${PROJECT_SOURCE_DIR}/source/teensy41/layout.ld"
-			"-T ${PROJECT_SOURCE_DIR}/source/teensy41/layout.ld"
-		)
-		set_target_properties(${PROJECT_NAME} PROPERTIES
-			LINK_DEPENDS "${PROJECT_SOURCE_DIR}/source/teensy41/source/teensy41/layout.ld"
+	if(BOARD_NAME STREQUAL "Teensy 4.1")
+		target_link_options(${PROJECT_NAME} PRIVATE
+			"-T" "${PROJECT_SOURCE_DIR}/source/teensy41/layout.ld"
 		)
 
 		# Post-processing so it can actually be run.
