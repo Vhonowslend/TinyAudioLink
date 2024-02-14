@@ -24,13 +24,17 @@ struct registerUndefined {
 	static volatile inline std::size_t& ref = *reinterpret_cast<volatile std::size_t*>(address);
 
 	protected:
-	[[gnu::always_inline]] registerUndefined& operator=(std::size_t value)
+	[[gnu::always_inline]]
+	registerUndefined&
+		operator=(std::size_t value)
 	{
 		ref = value;
 		return *this;
 	}
 
-	[[gnu::always_inline]] registerUndefined& operator|=(std::size_t value)
+	[[gnu::always_inline]]
+	registerUndefined&
+		operator|=(std::size_t value)
 	{
 		ref |= value;
 		return *this;
@@ -57,23 +61,31 @@ struct registerReadWrite : registerUndefined<address> {
 	}
 
 	template<typename T>
-	[[gnu::always_inline]] registerReadWrite& operator=(T value)
+	[[gnu::always_inline]]
+	registerReadWrite&
+		operator=(T value)
 	{
 		return static_cast<registerReadWrite&>(registerUndefined<address>::operator=(value));
 	}
 
-	[[gnu::always_inline]] registerReadWrite& operator=(std::size_t value)
+	[[gnu::always_inline]]
+	registerReadWrite&
+		operator=(std::size_t value)
 	{
 		return static_cast<registerReadWrite&>(registerUndefined<address>::operator=(value));
 	}
 
 	template<typename T>
-	[[gnu::always_inline]] registerReadWrite& operator|=(T value)
+	[[gnu::always_inline]]
+	registerReadWrite&
+		operator|=(T value)
 	{
 		return static_cast<registerReadWrite&>(registerUndefined<address>::operator|=(value));
 	}
 
-	[[gnu::always_inline]] registerReadWrite& operator|=(std::size_t value)
+	[[gnu::always_inline]]
+	registerReadWrite&
+		operator|=(std::size_t value)
 	{
 		return static_cast<registerReadWrite&>(registerUndefined<address>::operator|=(value));
 	}
@@ -100,23 +112,31 @@ template<std::size_t address>
 struct registerWriteOnly : registerUndefined<address> {
 	public:
 	template<typename T>
-	[[gnu::always_inline]] registerWriteOnly& operator=(T value)
+	[[gnu::always_inline]]
+	registerWriteOnly&
+		operator=(T value)
 	{
 		return static_cast<registerWriteOnly&>(registerUndefined<address>::operator=(value));
 	}
 
-	[[gnu::always_inline]] registerWriteOnly& operator=(std::size_t value)
+	[[gnu::always_inline]]
+	registerWriteOnly&
+		operator=(std::size_t value)
 	{
 		return static_cast<registerWriteOnly&>(registerUndefined<address>::operator=(value));
 	}
 
 	template<typename T>
-	[[gnu::always_inline]] registerWriteOnly& operator|=(T value)
+	[[gnu::always_inline]]
+	registerWriteOnly&
+		operator|=(T value)
 	{
 		return static_cast<registerWriteOnly&>(registerUndefined<address>::operator|=(value));
 	}
 
-	[[gnu::always_inline]] registerWriteOnly& operator|=(std::size_t value)
+	[[gnu::always_inline]]
+	registerWriteOnly&
+		operator|=(std::size_t value)
 	{
 		return static_cast<registerWriteOnly&>(registerUndefined<address>::operator|=(value));
 	}
