@@ -43,6 +43,8 @@ SECTIONS
 
 		KEEP(*(.flashLoader))	
 
+		FILL(0xFFFFFFFF): . = ORIGIN(FLASH) + 0x1000;
+		
 		/* Image Vector Table
 		 * - IMXRT1060RM_rev1_Processor_Manual.pdf: 8.7.1
 		 * 
@@ -51,8 +53,8 @@ SECTIONS
 		 * - SD/MMC/...: 0x400 (1KB, loads 4KB only)
 		 * - FlexSPI NAND: 0x400 (1KB, loads 4KB only)
 		 */
-		FILL(0xFFFFFFFF): . = ORIGIN(FLASH) + 0x1000;
 		KEEP(*(.imageVectorTable))
+
 		KEEP(*(.bootData))
 	} > FLASH
 
@@ -132,7 +134,7 @@ SECTIONS
 
 	.text.fin : {
 		/* Ensure we are aligned to a page */
-		FILL(0xFEEDDEAD): . = ALIGN(4096);
+		FILL(0xFFFFFFFF): . = ALIGN(4096);
 
 		__flashImageEnd = .;
 		__flashImageLength = __flashImageEnd - __flashImageStart;
