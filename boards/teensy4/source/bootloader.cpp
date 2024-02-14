@@ -90,7 +90,5 @@ void _start_internal(void)
 	// Ensure all data is present.
 	__asm volatile("dsb" ::: "memory");
 
-	while (true) {
-		main();
-	}
+	main();
 }
