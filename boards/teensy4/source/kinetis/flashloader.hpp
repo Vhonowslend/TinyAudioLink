@@ -1,16 +1,16 @@
 // TinyAudioLink - Seamlessly transfer Audio between USB capable devices
 // Copyright (C) 2019 Michael Fabian 'Xaymar' Dirks
-// 
+//
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
 // (at your option) any later version.
-// 
+//
 // This program is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 // GNU General Public License for more details.
-// 
+//
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
@@ -21,7 +21,7 @@
 // This is critical, so ensure it's byte aligned.
 #pragma pack(push, 1)
 
-#include "../std/inttypes.h"
+#include <inttypes.h>
 
 // Defaults are for loading from NAND Flash. It can support NOR Flash and SD/eMMC.
 struct flashLoader_t {
@@ -44,7 +44,7 @@ struct flashLoader_t {
 	// - 3 HyperFlash/HyperRAM
 	// - 12/13 Serial NAND, see Datasheet
 	// - 0 Anything else
-	uint8_t columnAdressWidth = 0; 
+	uint8_t columnAdressWidth = 0;
 	// 0x010 Device Mode Configuration Feature
 	uint8_t deviceModeCfgEnable = 0;
 	// 0x011 Device Mode Type
@@ -84,7 +84,7 @@ struct flashLoader_t {
 	uint8_t sflashPadType = 4; // Teensy 4.1 is Quad Pad
 	// 0x046
 	uint8_t serialClkFreq = 8;
-	// 0x047 
+	// 0x047
 	// - 0 Use pre-defined LUT Sequence Index and Number
 	// - 1 Use LUT parameters provided with lutCustomSeq.
 	uint8_t lutCustomSeqEnable = 0;
@@ -248,4 +248,4 @@ struct flashLoader_t {
 };
 
 #pragma pack(pop)
-#endif 
+#endif

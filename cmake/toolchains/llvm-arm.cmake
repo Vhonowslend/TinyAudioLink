@@ -65,6 +65,11 @@ if(NOT (EXISTS "${PROJECT_BINARY_DIR}/toolchain/${LLVM_FILENAME}/bin"))
 	)
 endif()
 
+list(APPEND CMAKE_PREFIX_PATH
+	"${PROJECT_BINARY_DIR}/toolchain/${LLVM_FILENAME}/bin"
+	"${PROJECT_BINARY_DIR}/toolchain/${LLVM_FILENAME}"
+)
+
 # Find necessary programs.
 find_program(
 	CLANG_C_COMPILER
@@ -117,8 +122,8 @@ set(CMAKE_AR "${CLANG_LLVM_AR}")
 if(CMAKE_VERSION VERSION_GREATER_EQUAL 3.29)
 	set(CMAKE_LINKER_TYPE "LLD")
 else()
-#	set(CMAKE_EXE_LINKER_FLAGS_INIT "-fuse-ld=\"${CLANG_LLVM_LD_LDD}\"")
+	set(CMAKE_EXE_LINKER_FLAGS_INIT "-fuse-ld=\"${CLANG_LLVM_LD_LDD}\"")
 #	set(CMAKE_STATIC_LINKER_FLAGS_INIT "-fuse-ld=\"${CLANG_LLVM_LD_LDD}\"")
-#	set(CMAKE_MODULE_LINKER_FLAGS_INIT "-fuse-ld=\"${CLANG_LLVM_LD_LDD}\"")
-#	set(CMAKE_SHARED_LINKER_FLAGS_INIT "-fuse-ld=\"${CLANG_LLVM_LD_LDD}\"")
+	set(CMAKE_MODULE_LINKER_FLAGS_INIT "-fuse-ld=\"${CLANG_LLVM_LD_LDD}\"")
+	set(CMAKE_SHARED_LINKER_FLAGS_INIT "-fuse-ld=\"${CLANG_LLVM_LD_LDD}\"")
 endif()

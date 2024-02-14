@@ -17,20 +17,20 @@
 
 MEMORY
 {
-	ITCM (rwx):  ORIGIN = 0x00000000, LENGTH = 512K
-	DTCM (rwx):  ORIGIN = 0x20000000, LENGTH = 512K
-	RAM (rwx):   ORIGIN = 0x20200000, LENGTH = 512K
-	FLASH (rwx): ORIGIN = 0x60000000, LENGTH = 7936K
-	ERAM (rwx):  ORIGIN = 0x70000000, LENGTH = 16384K
+	ITCM (rwx):  ORIGIN = @BOARD_ITCM@, LENGTH = @BOARD_ITCM_SIZE@
+	DTCM (rwx):  ORIGIN = @BOARD_DTCM@, LENGTH = @BOARD_DTCM_SIZE@
+	SRAM (rwx):  ORIGIN = @BOARD_SRAM@, LENGTH = @BOARD_SRAM_SIZE@
+	FLASH (rwx): ORIGIN = @BOARD_FLASH@, LENGTH = @BOARD_FLASH_SIZE@
+	ERAM (rwx):  ORIGIN = @BOARD_ERAM@, LENGTH = @BOARD_ERAM_SIZE@
 }
 
-ENTRY(__imageVectorTable)
+ENTRY(_start)
 
 SECTIONS
 {
 	.text.headers : {
 		KEEP(*(.flashLoader))
-		FILL(0xFF)
+		FILL(0xFEEDDEAD)
 
 		/* Image Vector Table
 		 * - IMXRT1060RM_rev1_Processor_Manual.pdf: 8.7.1
@@ -101,11 +101,11 @@ SECTIONS
 		*(.hab_log)
 		*(.dmabuffers)
 		. = ALIGN(32);
-	} > RAM
+	} > SRAM
 
 	/* CSF for HAB, which is not used. Still going to keep it i guess. */
 	.text.csf : {
-		FILL(0xFF)
+		FILL(0xFEEDDEAD)
 		. = ALIGN(1024);
 		KEEP(*(.csf))
 		__text_csf_end = .;

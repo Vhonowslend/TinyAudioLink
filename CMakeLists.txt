@@ -170,15 +170,34 @@ version(GENERATE PROJECT_VERSION
 project(${PROJECT_NAME} VERSION ${PROJECT_VERSION})
 
 ################################################################################
+# Options
+################################################################################
+set(BOARD_NAME "${BOARD_NAME}" CACHE STRING "The Board for which to build.")
+set(BOARD_VERSION "${BOARD_VERSION}" CACHE STRING "The Board version for which this should be built. Leave empty if there is no version.")
+
+################################################################################
+# Board support
+################################################################################
+
+# Teensy
+string(TOLOWER "${BOARD_NAME}" BOARD_NAME_L)
+if(BOARD_NAME_L MATCHES "teensy")
+	# Teensy 4.x
+	if(BOARD_VERSION MATCHES "^4.*")
+		add_subdirectory("boards/teensy4")
+	endif()
+endif()
+
+################################################################################
 # Project
 ################################################################################
 
 add_executable(${PROJECT_NAME})
 set_target_properties(${PROJECT_NAME} PROPERTIES
 	# Set C++ Standard and Extensions
-	C_STANDARD 23
+	C_STANDARD 17
 	C_STANDARD_REQUIRED ON
-	CXX_STANDARD 23
+	CXX_STANDARD 20
 	CXX_STANDARD_REQUIRED ON
 	CXX_EXTENSIONS OFF
 
@@ -208,29 +227,14 @@ generate_compile_commands_json(
 )
 clang_tidy(
 	TARGETS ${PROJECT_NAME}
-	DEPENDENCY
 	VERSION 15.0.0
 )
 clang_format(
 	TARGETS ${PROJECT_NAME}
-	DEPENDENCY
 	VERSION 15.0.0
+	DEPENDENCY
+	GLOBAL
 )
 
-# Board Specific
-if((CMAKE_CXX_COMPILER_ID STREQUAL "Clang") OR (CMAKE_CXX_COMPILER_ID STREQUAL "GNU"))
-	# Teensy 4.1
-	if(BOARD_NAME STREQUAL "Teensy 4.1")
-		target_link_options(${PROJECT_NAME} PRIVATE
-			"-T" "${PROJECT_SOURCE_DIR}/source/teensy41/layout.ld"
-		)
-
-		# Post-processing so it can actually be run.
-		add_custom_command(
-			TARGET ${PROJECT_NAME}
-			POST_BUILD
-			COMMAND "${CMAKE_OBJCOPY_BIN}"
-			ARGS -O ihex "$<TARGET_FILE:${PROJECT_NAME}>" "$<TARGET_FILE_DIR:${PROJECT_NAME}>.bin"
-		)
-	endif()
-endif()
+# Configure the target for the chosen board
+configure_board(${PROJECT_NAME})
