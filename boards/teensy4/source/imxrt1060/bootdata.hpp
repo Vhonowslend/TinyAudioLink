@@ -21,12 +21,11 @@
 // This is critical, so ensure it's byte aligned.
 #pragma pack(push, 1)
 
-extern "C" {
 // Start of the Flash image.
-static std::size_t __flashImageStart;
+extern std::size_t __flashImageStart;
+
 // Length of the entire flash image.
-static std::size_t __flashImageLength;
-}
+extern std::size_t __flashImageLength;
 
 /** Boot Data
  * - IMXRT1060RM_rev1_Processor_Manual.pdf: 8.7.1.2
