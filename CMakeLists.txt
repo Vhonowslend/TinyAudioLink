@@ -203,6 +203,20 @@ target_include_directories(${PROJECT_NAME}
 		"source"
 )
 
+generate_compile_commands_json(
+	TARGETS ${PROJECT_NAME}
+)
+clang_tidy(
+	TARGETS ${PROJECT_NAME}
+	DEPENDENCY
+	VERSION 15.0.0
+)
+clang_format(
+	TARGETS ${PROJECT_NAME}
+	DEPENDENCY
+	VERSION 15.0.0
+)
+
 # Board Specific
 if((CMAKE_CXX_COMPILER_ID STREQUAL "Clang") OR (CMAKE_CXX_COMPILER_ID STREQUAL "GNU"))
 	# Teensy 4.1

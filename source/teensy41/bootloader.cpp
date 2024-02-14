@@ -29,20 +29,19 @@ extern "C" {
 	// Defined in Linker Script
 	static uint32_t __flashImageLength;
 
-[[gnu::used, gnu::section(".flashLoader")]] static flashLoader_t __flashLoader = {
+	[[gnu::used, gnu::section(".flashLoader")]] static flashLoader_t __flashLoader = {
+	};
 
-};
+	[[gnu::used, gnu::section(".bootData")]] static bootData_t __bootData = {
+		.start  = (void*)0x6000000,
+		.length = (uint32_t)&__flashImageLength,
+	};
 
-[[gnu::used, gnu::section(".bootData")]] static bootData_t __bootData = {
-	.start  = (void*)0x6000000,
-	.length = (uint32_t)&__flashImageLength,
-};
-
-[[gnu::used, gnu::section(".imageVectorTable")]] static imageVectorTable_t __imageVectorTable{
-	.entryPoint = &_start,
-	.bootData   = &__bootData,
-	.self       = &__imageVectorTable,
-};
+	[[gnu::used, gnu::section(".imageVectorTable")]] static imageVectorTable_t __imageVectorTable{
+		.entryPoint = &_start,
+		.bootData   = &__bootData,
+		.self       = &__imageVectorTable,
+	};
 }
 
 [[gnu::used, gnu::section(".startup")]] void _start(void)
