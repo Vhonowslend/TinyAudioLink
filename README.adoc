@@ -1,0 +1,12 @@
+== TinyAudioLink ==
+**Seamlessly stream Audio between two USB-capable devices!**
+
+=== What is TinyAudioLink ===
+This is an attempt at writing an open source device that can transfer any number of audio channels, in any configuration, to another device and back. Might eventually get more features when the baseline stuff works.
+
+=== Supported Boards === 
+
+==== Teensy 4.0, Teensy 4.1 ====
+The Teensy 4.x series is a powerful ARM Cortex-M7 based chip with quite a few features. Of note are the dual USB controllers, ARMv7E-M compatible chip, Single and Double Precision Floating Point Math, SIMD, and various other DSP specific things. Each of the USB controllers can run USB 2.x at 480mbit/s in either Host or Client mode, which technically allows us to connect to a modern Phone if we wanted to. 
+
+While we can actually push quite the number of Audio Channels over USB, the real limitation is memory and processing power. In theory, the Teensy 4.1 and 4.0 can handle ~312 Audio Streams over USB 2.0 480mbit/s, but in reality with the limited amount of RAM the true limit is more around 64 32bit Audio Channels. This still gives us a total of 16 Stereo Input and 16 Stereo Output Audio Devices on each side.
