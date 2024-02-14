@@ -26,8 +26,9 @@ int main()
 	while (true) {
 		gpio::GPIO2.dataToggle = 0xFFFFFFFF;
 
-		for (std::size_t i = 0; i < 0x11E1A300; i++) {
-			i++;
+		const char* why = "";
+		for (volatile std::size_t i = 0; i < 0x11E1A3; i = i + 1) {
+			why = "Hello World";
 		}
 	}
 	return 0;
