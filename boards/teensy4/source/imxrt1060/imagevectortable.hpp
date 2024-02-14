@@ -18,7 +18,7 @@
 #ifndef TEENSY41_IMAGEVECTORTABLE_H
 #define TEENSY41_IMAGEVECTORTABLE_H
 
-#include <inttypes.h>
+#include <cinttypes>
 #include "bootdata.hpp"
 
 // This is critical, so ensure it's byte aligned.
@@ -30,28 +30,28 @@
  */
 struct imageVectorTable_t;
 struct imageVectorTable_t {
-	// Big Endian Header: Tag, Length, Version in one field.
-	// - Should end up as 0x412000D1.
-	struct header_t {
-		uint8_t  version = 0x41;
-		uint16_t length  = sizeof(imageVectorTable_t);
-		uint8_t  tag     = 0xD1;
-	} header;
-	// Entry: Absolute address of the first instruction?
+	// 0x00 Big Endian Header: Tag, Length, Version in one field.
+	// [[scalar_storage_order("big-endian")]] struct header_t {
+	// 	uint8_t                                         tag     = 0xD1;
+	// 	uint16_t length  = sizeof(imageVectorTable_t);
+	// 	uint8_t                                         version = 0x41;
+	// } header;
+	uint32_t header = 0x412000D1;
+	// 0x04 Entry: Absolute address of the first instruction?
 	void (*entryPoint)() = nullptr;
-	// Reserved, must be zero.
+	// 0x08 Reserved, must be zero.
 	uint32_t __reserved1 = 0;
-	// Device Configuration Data: Absolute address but optional, so it's NULL.
+	// 0x0C Device Configuration Data: Absolute address but optional, so it's NULL.
 	void* dcd = nullptr;
-	// Boot Data: Absolute address of the boot data.
+	// 0x10 Boot Data: Absolute address of the boot data.
 	bootData_t* bootData = nullptr;
-	// Image Vector Table: The address of this structure.
+	// 0x14 Image Vector Table: The address of this structure.
 	imageVectorTable_t* self = nullptr;
-	// Command Sequence File: See High-Assurance Boot for details. Must be NULL if not performing HAB.
+	// 0x18 Command Sequence File: See High-Assurance Boot for details. Must be NULL if not performing HAB.
 	void* csf = nullptr;
-	// Reserved, must be zero.
+	// 0x1C Reserved, must be zero.
 	uint32_t __reserved2 = 0;
-};
+}; // 0x20
 
 #pragma pack(pop)
 #endif

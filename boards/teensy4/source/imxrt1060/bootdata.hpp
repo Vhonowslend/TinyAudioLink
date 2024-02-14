@@ -23,15 +23,22 @@
 
 #include <cinttypes>
 
+extern "C" {
+// Start of the Flash image.
+static uint32_t __flashImageStart;
+// Length of the entire flash image.
+static uint32_t __flashImageLength;
+}
+
 /** Boot Data
  * - IMXRT1060RM_rev1_Processor_Manual.pdf: 8.7.1.2
  * 
  */
 struct bootData_t {
 	// Absolute address of the image.
-	void* start = nullptr;
+	void* start = (void*)&__flashImageStart;
 	// Length of the image.
-	uint32_t length = 0;
+	uint32_t length = (uint32_t)&__flashImageLength;
 	// Plugin flags, see 8.8
 	uint32_t plugin = 0;
 };

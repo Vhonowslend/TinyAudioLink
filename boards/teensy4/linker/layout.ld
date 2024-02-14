@@ -15,6 +15,15 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+/* Teensy 4.x Info
+ * - FlexSPI NAND Flash uses 256 byte pages with 4096 byte sectors.
+ *   - Align to sector, since it speeds up Flash access.
+ * - ITCM and DTCM must be initialized by software.
+ * - SRAM is run via On-Chip RAM2, near instant access. 
+ * - FLASH is run via FlexSPI1, max 256MB.
+ * - ERAM is run via FlexSPI2, max 240MB.
+ */
+
 MEMORY
 {
 	ITCM (rwx):  ORIGIN = @BOARD_ITCM@, LENGTH = @BOARD_ITCM_SIZE@
@@ -29,8 +38,8 @@ ENTRY(_start)
 SECTIONS
 {
 	.text.headers : {
-		KEEP(*(.flashLoader))
-		FILL(0xFEEDDEAD)
+		. = ORIGIN(FLASH);
+		KEEP(*(.flashLoader))	
 
 		/* Image Vector Table
 		 * - IMXRT1060RM_rev1_Processor_Manual.pdf: 8.7.1
@@ -40,16 +49,18 @@ SECTIONS
 		 * - SD/MMC/...: 0x400 (1KB, loads 4KB only)
 		 * - FlexSPI NAND: 0x400 (1KB, loads 4KB only)
 		 */
-		. = ORIGIN(FLASH) + 0x1000;
+		FILL(0xFEEDDEAD): . = ORIGIN(FLASH) + 0x1000;
 		KEEP(*(.imageVectorTable))
 		KEEP(*(.bootData))
-		. = ALIGN(1024);
 	} > FLASH
 
 	.text.code : {
+		/* Ensure we are aligned to a page */
+		FILL(0xFEEDDEAD): . = ALIGN(4096);
+
 		KEEP(*(.startup))
 		*(.flashmem*)
-		. = ALIGN(4);
+		
 		KEEP(*(.init))
 		__preinit_array_start = .;
 		KEEP (*(.preinit_array))
@@ -57,20 +68,21 @@ SECTIONS
 		__init_array_start = .;
 		KEEP (*(.init_array))
 		__init_array_end = .;
-		. = ALIGN(4);
 	} > FLASH
 
 	.text.progmem : {
-		*(.progmem*)
-		. = ALIGN(4);
+		/* Ensure we are aligned to a page */
+		FILL(0xFEEDDEAD): . = ALIGN(4096);
+		
+		*(.progmem*)		
 	} > FLASH
 
-	.text.itcm : {
-		. = . + 32; /* MPU to trap NULL pointer deref */
-		*(.fastrun)
-		*(.text*)
-		. = ALIGN(16);
-	} > ITCM  AT> FLASH
+	/* .text.itcm : {
+	 * 	. = . + 32; /* MPU to trap NULL pointer deref * /
+	 * 	*(.fastrun)
+	 * 	*(.text*)		
+	 * } > ITCM  AT> FLASH
+	 */
 
 	/* Included by Teensyduino, but unclear why. Does not seem to have a use.
 	 * 	.ARM.exidx : {
@@ -83,40 +95,44 @@ SECTIONS
 		*(.ARM.exidx* .ARM.extab.text* .gnu.linkonce.armexidx.*)
 	} 
 	
-	.data : {
-    	*(.endpoint_queue)    
-		*(SORT_BY_ALIGNMENT(SORT_BY_NAME(.rodata*)))
-		*(SORT_BY_ALIGNMENT(SORT_BY_NAME(.data*)))
-   		 KEEP(*(.vectorsram))
-	} > DTCM  AT> FLASH
+	/* .data : {
+     * 	*(.endpoint_queue)    
+	 * 	*(SORT_BY_ALIGNMENT(SORT_BY_NAME(.rodata*)))
+	 * 	*(SORT_BY_ALIGNMENT(SORT_BY_NAME(.data*)))
+   	 * 	 KEEP(*(.vectorsram))
+	 * } > DTCM  AT> FLASH
+	 */
 
-	.bss ALIGN(4) : {
-		*(SORT_BY_ALIGNMENT(SORT_BY_NAME(.bss*)))
-		*(SORT_BY_ALIGNMENT(SORT_BY_NAME(COMMON)))
-		. = ALIGN(32);
-		. = . + 32; /* MPU to trap stack overflow */
-	} > DTCM
+	 /* .bss ALIGN(4) : {
+	 * 	*(SORT_BY_ALIGNMENT(SORT_BY_NAME(.bss*)))
+	 * 	*(SORT_BY_ALIGNMENT(SORT_BY_NAME(COMMON)))
+	 * 	. = ALIGN(32);
+	 * 	. = . + 32; /* MPU to trap stack overflow * /
+	 * } > DTCM  AT> FLASH
+	 */
 
-	.bss.dma (NOLOAD) : {
-		*(.hab_log)
-		*(.dmabuffers)
-		. = ALIGN(32);
-	} > SRAM
+	/* .bss.dma (NOLOAD) : {
+	 * 	*(.hab_log)
+	 * 	*(.dmabuffers)
+	 * 	. = ALIGN(32);
+	 * } > SRAM
+	 */
 
-	/* CSF for HAB, which is not used. Still going to keep it i guess. */
-	.text.csf : {
-		FILL(0xFEEDDEAD)
-		. = ALIGN(1024);
-		KEEP(*(.csf))
-		__text_csf_end = .;
-	} > FLASH
+	/* CSF for HAB, which is not used right now.
+	 * .text.csf : {
+	 * 	KEEP(*(.csf))
+	 * 	__text_csf_end = .;
+	 * } > FLASH
+	 */
 
 	.text.fin : {
-		/* Ensure the end address is aligned to a page, improves speed. */
-		. = ALIGN(1024);
+		/* Ensure we are aligned to a page */
+		FILL(0xFEEDDEAD): . = ALIGN(4096);
+
 		__flashImageEnd = .;
 	} > FLASH
 
+	__flashImageStart = ORIGIN(FLASH);
 	__flashImageLength = __flashImageEnd - ORIGIN(FLASH);
 
 /*	_ITCM_BLOCK_COUNT = (SIZEOF(.text.itcm) + 0x7FFE) >> 15;

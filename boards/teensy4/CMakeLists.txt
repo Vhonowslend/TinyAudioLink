@@ -153,7 +153,7 @@ function(configure_board TARGET)
 	add_custom_command(
 		TARGET ${TARGET}
 		POST_BUILD
-		COMMAND "${CMAKE_OBJCOPY_BIN}"
-		ARGS -O ihex "$<TARGET_FILE:${PROJECT_NAME}>" "$<TARGET_FILE_DIR:${PROJECT_NAME}>.bin"
+		COMMAND "${CMAKE_OBJCOPY}"
+		ARGS -O ihex "$<TARGET_FILE:${TARGET}>" "$<TARGET_FILE_DIR:${TARGET}>/$<TARGET_FILE_BASE_NAME:${TARGET}>.hex"
 	)
 endfunction()

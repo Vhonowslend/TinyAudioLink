@@ -14,8 +14,10 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-#include <inttypes.h>
+#include <cinttypes>
+#include <cstddef>
 #include "imxrt1060/bootdata.hpp"
+#include "imxrt1060/gpio.hpp"
 #include "imxrt1060/imagevectortable.hpp"
 #include "kinetis/flashloader.hpp"
 
@@ -26,15 +28,9 @@ extern "C" int main();
 void _start(void);
 
 extern "C" {
-// Defined in Linker Script
-static uint32_t __flashImageLength;
-
 [[gnu::used, gnu::section(".flashLoader")]] static flashLoader_t __flashLoader = {};
 
-[[gnu::used, gnu::section(".bootData")]] static bootData_t __bootData = {
-	.start  = (void*)0x6000000,
-	.length = (uint32_t)&__flashImageLength,
-};
+[[gnu::used, gnu::section(".bootData")]] static bootData_t __bootData = {};
 
 [[gnu::used, gnu::section(".imageVectorTable")]] static imageVectorTable_t __imageVectorTable{
 	.entryPoint = &_start,
@@ -49,5 +45,14 @@ static uint32_t __flashImageLength;
 	static_assert(sizeof(imageVectorTable_t) == 32, "Image Vector Table must be 32 bytes long.");
 	static_assert(sizeof(flashLoader_t) == 512, "Flash Loader must be 512 bytes long.");
 
-	main();
+	while (true) {
+		gpio::GPIO2.direction  = static_cast<std::size_t>(gpio::GPIO2.direction) | static_cast<std::size_t>(gpio::direction::Output) << 3;
+		gpio::GPIO2.dataToggle = static_cast<std::size_t>(gpio::state::On) << 3;
+
+		main();
+
+		for (auto i = 0; i < 0x7FFFFFFF; i++) {
+			i++;
+		}
+	}
 }
