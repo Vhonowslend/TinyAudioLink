@@ -22,7 +22,7 @@ ColumnLimit: 65535
 
 # Language
 Language: Cpp
-Standard: c++23
+Standard: Latest
 
 # Indentation
 AccessModifierOffset: 0
