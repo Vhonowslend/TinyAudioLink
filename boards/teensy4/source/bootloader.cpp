@@ -25,20 +25,19 @@
 // Main Application
 extern "C" int main();
 
-// Pre-definitions
-extern "C" {
-void _start(void);
-void _start_internal(void);
-
 // FlexRAM Bank Configuration
-static std::size_t __flexramBankConfig;
+extern std::size_t __flexramBankConfig;
 
 // Stack Address
-static std::size_t __stackStart;
+extern std::size_t __stackStart;
 
-[[gnu::used, gnu::section(".flashLoader")]] static flashLoader_t __flashLoader = {};
+// Pre-definitions
+extern "C" void _start(void);
+extern "C" void _start_internal(void);
 
 [[gnu::used, gnu::section(".bootData")]] static bootData_t __bootData = {};
+
+[[gnu::used, gnu::section(".flashLoader")]] static flashLoader_t __flashLoader = {};
 
 [[gnu::used, gnu::section(".imageVectorTable")]] static imageVectorTable_t __imageVectorTable{
 	.entryPoint = &_start,
@@ -46,7 +45,8 @@ static std::size_t __stackStart;
 	.self       = &__imageVectorTable,
 };
 
-[[gnu::used, gnu::section(".startup"), gnu::visibility("default"), gnu::naked, gnu::noreturn]] void _start(void)
+extern "C" [[gnu::used, gnu::section(".startup"), gnu::visibility("default"), gnu::naked, gnu::noreturn]]
+void _start(void)
 {
 	// We can't use our nice register wrappers here, so raw writes to register it is.
 	// Eventually move some of this into DCD:
@@ -80,7 +80,8 @@ static std::size_t __stackStart;
 	//_start_internal();
 }
 
-[[gnu::used, gnu::section(".startup"), gnu::visibility("default"), gnu::noinline, gnu::noreturn]] void _start_internal(void)
+extern "C" [[gnu::used, gnu::section(".startup"), gnu::visibility("default"), gnu::noinline, gnu::noreturn]]
+void _start_internal(void)
 {
 	static_assert(sizeof(bootData_t) == bootData_sz, "Boot Data must be 12 bytes long.");
 	static_assert(sizeof(imageVectorTable_t) == imageVectorTable_sz, "Image Vector Table must be 32 bytes long.");
@@ -92,5 +93,4 @@ static std::size_t __stackStart;
 	while (true) {
 		main();
 	}
-}
 }
