@@ -87,14 +87,21 @@ target_compile_options(${BOARD_LIB_NAME}
 		"-fmax-type-align=4"
 		"-fshort-enums"
 		"-fshort-wchar"
-#		"-fno-builtin"
 		"-frwpi"
-#		"-fpic"
-#		"-fpie"
-		# Unclear if Compiler or Linker 
+		"-felide-constructors"
+		"-nostdlib"
 		"-ffreestanding"
-#		"-fdata-sections"
-#		"-ffunction-sections"
+		"-fdata-sections"
+		"-ffunction-sections"
+		# IMXRT1060 is a Single Core, but we do have several "coprocessors".
+		"-fno-threadsafe-statics"
+		# Can't fit ARM.exidx and more anywhere, so disable exceptions
+		"-fno-exceptions"
+)
+target_link_libraries(${BOARD_LIB_NAME}
+	PUBLIC
+		"m"
+		"c++"
 )
 target_link_options(${BOARD_LIB_NAME}
 	PUBLIC
@@ -145,36 +152,42 @@ clang_format(
 )
 
 function(configure_board TARGET)
-	get_target_property(_INTERFACE_LINK_OPTIONS "Teensy" INTERFACE_LINK_OPTIONS)
-
 	target_sources(${TARGET} PRIVATE $<TARGET_OBJECTS:Teensy>)
 	target_link_libraries(${TARGET} PRIVATE
-#		$<TARGET_OBJECTS:Teensy>
 		"Teensy"
+		"$<TARGET_PROPERTY:Teensy,INTERFACE_LINK_LIBRARIES>"
+	)
+	target_compile_options(${TARGET} PRIVATE
+		"$<TARGET_PROPERTY:Teensy,INTERFACE_COMPILE_OPTIONS>"
 	)
 	target_link_options(${TARGET} PRIVATE
 		"$<TARGET_PROPERTY:Teensy,INTERFACE_LINK_OPTIONS>"
-		#${_INTERFACE_LINK_OPTIONS}		
 	)
 	target_include_directories(${TARGET} PRIVATE
 		"$<TARGET_PROPERTY:Teensy,INTERFACE_INCLUDE_DIRECTORIES>"
 	)
 
 	# Post-processing so it can actually be run.
+	set_property(
+		TARGET ${TARGET}
+		APPEND PROPERTY ADDITIONAL_CLEAN_FILES "$<TARGET_FILE_DIR:${TARGET}>/$<TARGET_FILE_BASE_NAME:${TARGET}>.hex"
+	)
 	add_custom_command(
 		TARGET ${TARGET}
 		POST_BUILD
 		COMMAND "${CMAKE_OBJCOPY}"
 		ARGS -O ihex "$<TARGET_FILE:${TARGET}>" "$<TARGET_FILE_DIR:${TARGET}>/$<TARGET_FILE_BASE_NAME:${TARGET}>.hex"
-#		BYPRODUCTS "$<TARGET_FILE_DIR:${TARGET}>/$<TARGET_FILE_BASE_NAME:${TARGET}>.hex"
 	)
 
 	# Post-Processing for debugging Assembly.
+	set_property(
+		TARGET ${TARGET}
+		APPEND PROPERTY ADDITIONAL_CLEAN_FILES "$<TARGET_FILE_DIR:${TARGET}>/$<TARGET_FILE_BASE_NAME:${TARGET}>.asm"
+	)
 	add_custom_command(
 		TARGET ${TARGET}
 		POST_BUILD
 		COMMAND "${CMAKE_OBJDUMP}"
 		ARGS --disassemble-all --line-numbers --source --demangle --symbolize-operands "$<TARGET_FILE:${TARGET}>" > "$<TARGET_FILE_DIR:${TARGET}>/$<TARGET_FILE_BASE_NAME:${TARGET}>.asm"
-#		BYPRODUCTS "$<TARGET_FILE_DIR:${TARGET}>/$<TARGET_FILE_BASE_NAME:${TARGET}>.asm"
 	)
 endfunction()
