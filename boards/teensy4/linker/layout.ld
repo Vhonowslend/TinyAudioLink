@@ -111,9 +111,18 @@ SECTIONS
 	} > DTCM AT> FLASH
 
 	.data.bss ALIGN(4) : {
+		__bssStart = .;
+
 		*(SORT_BY_ALIGNMENT(SORT_BY_NAME(.bss*)))
+		
+		/* Ensure we are aligned to a page */
+		FILL(0xFFFFFFFF): . = ALIGN(4096);
+
+		__bssEnd = .;
+
 		*(SORT_BY_ALIGNMENT(SORT_BY_NAME(COMMON)))
 	} > DTCM AT> FLASH
+	__bssLength = __bssEnd - __bssStart;
 
 	.data.dtcm : {
 		*(SORT_BY_ALIGNMENT(SORT_BY_NAME(.fastData)))
@@ -145,6 +154,8 @@ SECTIONS
 	 * - While DTCM and ITCM are clear, it isn't clear what OCRAM configuration is for.
 	 * - We can also mark things as unused, but really we just want the extra DTCM area for stack.
 	 */
+	__itcmStart = @BOARD_ITCM@;
+	__dtcmStart = @BOARD_DTCM@;
 	__itcmBlockCount = (__fastCodeLength + 0x7FFF) >> 15;
 	__flexramBankConfig = 0xAAAAAAAA | ((1 << __itcmBlockCount * 2) - 1);
 	__stackStart = ORIGIN(DTCM) + __fastDataLength;
