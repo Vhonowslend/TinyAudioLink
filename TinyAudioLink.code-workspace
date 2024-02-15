@@ -59,7 +59,9 @@
 			"unordered_map": "cpp",
 			"variant": "cpp",
 			"vector": "cpp",
-			"algorithm": "cpp"
+			"algorithm": "cpp",
+			"cstring_memcpy": "cpp",
+			"*.impl": "cpp"
 		}
 	}
 }

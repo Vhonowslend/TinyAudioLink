@@ -53,11 +53,18 @@
     ],
     "buildPresets": [
         {
-            "name": "Teensy41",
-            "description": "",
-            "displayName": "Teensy 4.1",
             "configurePreset": "teensy41-llvmarm-ninja",
-			"configuration": "Release"
+            "name": "teensy41-llvmarm-ninja-debug",
+            "description": "",
+            "displayName": "Debug",
+            "configuration": "Debug"
+        },
+        {
+            "configurePreset": "teensy41-llvmarm-ninja",
+            "name": "teensy41-llvmarm-ninja-release",
+            "description": "",
+            "displayName": "Release",
+            "configuration": "Release"
         }
     ]
 }

@@ -166,5 +166,15 @@ function(configure_board TARGET)
 		POST_BUILD
 		COMMAND "${CMAKE_OBJCOPY}"
 		ARGS -O ihex "$<TARGET_FILE:${TARGET}>" "$<TARGET_FILE_DIR:${TARGET}>/$<TARGET_FILE_BASE_NAME:${TARGET}>.hex"
+#		BYPRODUCTS "$<TARGET_FILE_DIR:${TARGET}>/$<TARGET_FILE_BASE_NAME:${TARGET}>.hex"
+	)
+
+	# Post-Processing for debugging Assembly.
+	add_custom_command(
+		TARGET ${TARGET}
+		POST_BUILD
+		COMMAND "${CMAKE_OBJDUMP}"
+		ARGS --disassemble-all --line-numbers --source --demangle --symbolize-operands "$<TARGET_FILE:${TARGET}>" > "$<TARGET_FILE_DIR:${TARGET}>/$<TARGET_FILE_BASE_NAME:${TARGET}>.asm"
+#		BYPRODUCTS "$<TARGET_FILE_DIR:${TARGET}>/$<TARGET_FILE_BASE_NAME:${TARGET}>.asm"
 	)
 endfunction()
