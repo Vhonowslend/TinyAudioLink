@@ -18,16 +18,18 @@
 #include <cstddef>
 #include "imxrt1060/gpio.hpp"
 
+static std::size_t shouldBeInBSS = 0b1000;
+
 extern "C" [[gnu::used]]
 int main()
 {
 	gpio::GPIO2.direction = 0xFFFFFFFF;
 	gpio::GPIO2.data      = 0xFFFFFFFF;
 	while (true) {
-		gpio::GPIO2.dataToggle = 0xFFFFFFFF;
+		gpio::GPIO2.dataToggle = shouldBeInBSS;
 
 		const char* why = "";
-		for (volatile std::size_t i = 0; i < 0x11E1A3; i = i + 1) {
+		for (volatile std::size_t i = 0; i < 0x11E1A3 * 3; i = i + 1) {
 			why = "Hello World";
 		}
 	}
