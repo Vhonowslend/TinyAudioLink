@@ -27,18 +27,16 @@
 
 extern std::size_t __flexramBankConfig; // FlexRAM Bank Configuration
 extern std::size_t __stackStart; // Stack Address
-extern std::size_t __itcmStart; // ITCM Address
-extern std::size_t __dtcmStart; // DTCM Address
-extern std::size_t __fastCodeStart; // Flash Fast Code Start
-extern std::size_t __fastCodeEnd; // Flash Fast Code End
+
 extern std::size_t __fastCodeLength; // Flash Fast Code End
 extern std::size_t __fastCodeAddress; // Flash Fast Code Address
-extern std::size_t __fastDataStart; // Flash Fast Data Start
-extern std::size_t __fastDataEnd; // Flash Fast Data End
+extern std::size_t __itcmStart; // ITCM Address
+
 extern std::size_t __fastDataLength; // Flash Fast Data End
 extern std::size_t __fastDataAddress; // Flash Fast Data Address
+extern std::size_t __dtcmStart; // DTCM Address
+
 extern std::size_t __bssStart; // BSS Start
-extern std::size_t __bssEnd; // BSS End
 extern std::size_t __bssLength; // BSS End
 
 // Main Application

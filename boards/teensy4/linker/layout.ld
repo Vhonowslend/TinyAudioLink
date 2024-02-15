@@ -95,17 +95,50 @@ SECTIONS
 	} > FLASH
 
 	.flash.fastCode : ALIGN(8) {
-		__fastCodeStart = .;
-
-		. = . + 32; /* MPU to trap NULL pointer deref */
+		. = . + 32; /* Use Memory Protection Unit to trap a null pointer dereference. */
 
 		*(.fastCode)
 		*(.text*)
-
-		__fastCodeEnd = .;
-		__fastCodeLength = __fastCodeEnd - __fastCodeStart;
 	} > ITCM AT> FLASH
+	__fastCodeLength = SIZEOF(.flash.fastCode);
 	__fastCodeAddress = LOADADDR(.flash.fastCode);
+
+	.flash.data : ALIGN(4) {
+		*(SORT_BY_ALIGNMENT(SORT_BY_NAME(.flashData)))
+	} > FLASH
+
+	.flash.fastData : ALIGN(4) {
+		*(SORT_BY_ALIGNMENT(SORT_BY_NAME(.rodata.*)))
+		*(SORT_BY_ALIGNMENT(SORT_BY_NAME(.data.*)))
+	} > DTCM AT> FLASH
+	__fastDataLength = SIZEOF(.flash.fastData);
+	__fastDataAddress = LOADADDR(.flash.fastData);
+
+	.flash : {
+		__flashImageEnd = .;
+		__flashImageLength = __flashImageEnd - __flashImageStart;
+	} > FLASH
+
+	.bss ALIGN(4) : {
+		*(SORT_BY_ALIGNMENT(SORT_BY_NAME(.bss*)))
+		*(SORT_BY_ALIGNMENT(SORT_BY_NAME(COMMON)))
+	} > DTCM
+	__bssStart = ADDR(.bss);
+	__bssLength = SIZEOF(.bss);
+
+	.stack : ALIGN(64) {
+		__stackStart = .;
+	} > DTCM
+
+	/* Calculate the Intruction/Data Tightly Coupled Memory split.
+	 * - The granularity of this is only 32KiB (512K / 16).
+	 * - While DTCM and ITCM are clear, it isn't clear what OCRAM configuration is for.
+	 * - We can also mark things as unused, but really we just want the extra DTCM area for stack.
+	 */
+	__itcmStart = @BOARD_ITCM@;
+	__dtcmStart = @BOARD_DTCM@;
+	__itcmBlockCount = (__fastCodeLength + 0x7FFF) >> 15;
+	__flexramBankConfig = 0xAAAAAAAA | ((1 << __itcmBlockCount * 2) - 1);
 
 	/* Handle ARM unwind information.
 	 * - It needs to be within -0x40000000 to +0x3FFFFFFF of the C++ code being run.
@@ -123,51 +156,7 @@ SECTIONS
 	/* 	/* . = ORIGIN(DTCM) + @BOARD_DTCM_SIZE@ - SIZEOF(.ARM.exidx*) - SIZEOF(.ARM.extab*) - SIZEOF(.gnu.linkonce.armexidx*) - 4K; */
 	/* 	*(.ARM.exidx* .ARM.extab* .gnu.linkonce.armexidx*) */
 	/* } > DTCM AT> FLASH */
-
-	.flash.data : ALIGN(4) {
-		*(SORT_BY_ALIGNMENT(SORT_BY_NAME(.flashData)))
-	} > FLASH
-
-	.flash.fastData : ALIGN(4) {
-		__fastDataStart = .;
-
-		*(SORT_BY_ALIGNMENT(SORT_BY_NAME(.rodata.*)))
-		*(SORT_BY_ALIGNMENT(SORT_BY_NAME(.data.*)))
-
-		__fastDataEnd = .;
-		__fastDataLength = __fastDataEnd - __fastDataStart;
-	} > DTCM AT> FLASH
-	__fastDataAddress = LOADADDR(.flash.fastData);
-
-	.flash : {
-		__flashImageEnd = .;
-		__flashImageLength = __flashImageEnd - __flashImageStart;
-	} > FLASH
-
-	.bss ALIGN(4) : {
-		__bssStart = .;
-
-		*(SORT_BY_ALIGNMENT(SORT_BY_NAME(.bss*)))
-		*(SORT_BY_ALIGNMENT(SORT_BY_NAME(COMMON)))
-
-		__bssEnd = .;
-	} > DTCM
-	__bssLength = __bssEnd - __bssStart;
-
-	.stack : ALIGN(64) {
-		__stackStart = .;
-	} > DTCM
-
-	/* Calculate the Intruction/Data Tightly Coupled Memory split.
-	 * - The granularity of this is only 32KiB (512K / 16).
-	 * - While DTCM and ITCM are clear, it isn't clear what OCRAM configuration is for.
-	 * - We can also mark things as unused, but really we just want the extra DTCM area for stack.
-	 */
-	__itcmStart = @BOARD_ITCM@;
-	__dtcmStart = @BOARD_DTCM@;
-	__itcmBlockCount = (__fastCodeLength + 0x7FFF) >> 15;
-	__flexramBankConfig = 0xAAAAAAAA | ((1 << __itcmBlockCount * 2) - 1);
-
+	
 	.debug_info     0 : { *(.debug_info) }
 	.debug_abbrev   0 : { *(.debug_abbrev) }
 	.debug_line     0 : { *(.debug_line) }
