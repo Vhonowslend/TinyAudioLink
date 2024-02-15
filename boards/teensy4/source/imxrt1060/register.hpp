@@ -20,7 +20,7 @@
 
 template<std::size_t address>
 struct registerUndefined {
-	private:
+	public:
 	static volatile inline std::size_t& ref = *reinterpret_cast<volatile std::size_t*>(address);
 
 	protected:
@@ -47,7 +47,7 @@ struct registerUndefined {
 };
 
 template<std::size_t address>
-struct registerReadWrite : registerUndefined<address> {
+struct registerReadWrite : public registerUndefined<address> {
 	public:
 	template<typename T>
 	[[gnu::always_inline]] operator T() const
@@ -92,7 +92,7 @@ struct registerReadWrite : registerUndefined<address> {
 };
 
 template<std::size_t address>
-struct registerReadOnly : registerUndefined<address> {
+struct registerReadOnly : public registerUndefined<address> {
 	public:
 	registerReadOnly& operator=(std::size_t value) = delete;
 
@@ -109,7 +109,7 @@ struct registerReadOnly : registerUndefined<address> {
 };
 
 template<std::size_t address>
-struct registerWriteOnly : registerUndefined<address> {
+struct registerWriteOnly : public registerUndefined<address> {
 	public:
 	template<typename T>
 	[[gnu::always_inline]]
