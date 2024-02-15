@@ -150,14 +150,11 @@ SECTIONS
 		*(SORT_BY_ALIGNMENT(SORT_BY_NAME(.bss*)))
 		*(SORT_BY_ALIGNMENT(SORT_BY_NAME(COMMON)))
 
-		/* Ensure we are aligned to a page */
-		FILL(0xFFFFFFFF): . = ALIGN(4096);
-
 		__bssEnd = .;
 	} > DTCM
 	__bssLength = __bssEnd - __bssStart;
 
-	.stack : ALIGN(4) {
+	.stack : ALIGN(64) {
 		__stackStart = .;
 	} > DTCM
 
