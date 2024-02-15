@@ -22,14 +22,36 @@
 #include "imxrt1060/iomuxc.hpp"
 #include "kinetis/flashloader.hpp"
 
+extern "C" [[gnu::section(".startup")]]
+void* flash_memcpy(void* dest, const void* src, std::size_t count)
+{
+#include "memcpy.impl"
+}
+
+extern "C" [[gnu::section(".startup")]]
+void* flash_memset(void* dest, uint8_t value, std::size_t count)
+{
+#include "memset.impl"
+}
+
 // Main Application
 extern "C" int main();
 
-// FlexRAM Bank Configuration
-extern std::size_t __flexramBankConfig;
-
-// Stack Address
-extern std::size_t __stackStart;
+extern std::size_t __flexramBankConfig; // FlexRAM Bank Configuration
+extern std::size_t __stackStart; // Stack Address
+extern std::size_t __itcmStart; // ITCM Address
+extern std::size_t __dtcmStart; // DTCM Address
+extern std::size_t __fastCodeStart; // Flash Fast Code Start
+extern std::size_t __fastCodeEnd; // Flash Fast Code End
+extern std::size_t __fastCodeLength; // Flash Fast Code End
+extern std::size_t __fastCodeAddress; // Flash Fast Code Address
+extern std::size_t __fastDataStart; // Flash Fast Data Start
+extern std::size_t __fastDataEnd; // Flash Fast Data End
+extern std::size_t __fastDataLength; // Flash Fast Data End
+extern std::size_t __fastDataAddress; // Flash Fast Data Address
+extern std::size_t __bssStart; // BSS Start
+extern std::size_t __bssEnd; // BSS End
+extern std::size_t __bssLength; // BSS End
 
 // Pre-definitions
 extern "C" void _start(void);
@@ -87,8 +109,15 @@ void _start_internal(void)
 	static_assert(sizeof(imageVectorTable_t) == imageVectorTable_sz, "Image Vector Table must be 32 bytes long.");
 	static_assert(sizeof(flashLoader_t) == falshLoader_sz, "Flash Loader must be 512 bytes long.");
 
+	// Need to do these from Flash, since ITCM, DTCM and BSS are not yet initialized.
+	flash_memcpy(&__itcmStart, &__fastCodeStart, reinterpret_cast<std::size_t>(&__fastCodeLength));
+	flash_memcpy(&__dtcmStart, &__fastDataStart, reinterpret_cast<std::size_t>(&__fastDataLength));
+	flash_memset(&__bssStart, 0x00, reinterpret_cast<std::size_t>(&__bssLength));
+
 	// Ensure all data is present.
 	__asm volatile("dsb" ::: "memory");
 
 	main();
+
+	__builtin_unreachable();
 }
