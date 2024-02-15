@@ -15,10 +15,12 @@
 	std::size_t num8 = count / 8; // lsrs
 	std::size_t num1 = rem8 % 4;
 	std::size_t num4 = rem8 / 4;
+	bool isAligned = ((std::size_t)dest % sizeof(uint32_t) == 0) && ((std::size_t)src % sizeof(uint32_t) == 0);
 
 	// Do the DoubleWord copies
 	void* endDW = reinterpret_cast<uint32_t*>(dest) + num8 * 2;
-	if (num8 > 0) {
+	if (isAligned && (num8 > 0)) {
+		// Must be word aligned, or we crash.
 #if 1
 		// LLVM does not use LDRD/STRD, which is significantly faster.
 		__asm volatile(R"(
@@ -46,7 +48,7 @@
 
 	// Do the Word copies
 	void* endW = reinterpret_cast<uint32_t*>(endDW) + num4;
-	if (num4 > 0) {
+	if (!isAligned || (num4 > 0)) {
 #if 0
 		__asm volatile(R"(
 	pli [%[src]]
