@@ -111,6 +111,7 @@ SECTIONS
 
 	.flash.fastData ALIGN(4) : {
 		*(SORT_BY_ALIGNMENT(SORT_BY_NAME(.rodata.*)))
+		__dtcmReadOnlyData = .;
 		*(SORT_BY_ALIGNMENT(SORT_BY_NAME(.data.*)))
 	} > DTCM AT> FLASH
 	__fastDataLength = SIZEOF(.flash.fastData);
@@ -158,19 +159,28 @@ SECTIONS
 	__bssStart = ADDR(.bss);
 	__bssLength = SIZEOF(.bss);
 
-	.stack ALIGN(64) : {
-		__stackStart = .;
-	} > DTCM
-
 	/* Calculate the Intruction/Data Tightly Coupled Memory split.
 	 * - The granularity of this is only 32KiB (512K / 16).
 	 * - While DTCM and ITCM are clear, it isn't clear what OCRAM configuration is for.
 	 * - We can also mark things as unused, but really we just want the extra DTCM area for stack.
 	 */
-	__itcmStart = @BOARD_ITCM@;
-	__dtcmStart = @BOARD_DTCM@;
 	__itcmBlockCount = (__fastCodeLength + 0x7FFF) >> 15;
 	__flexramBankConfig = 0xAAAAAAAA | ((1 << __itcmBlockCount * 2) - 1);
+
+	/* Pass further data for ITCM/DTCM MPU initialization.
+	 * - Can use this to trap invalid calls, if there are any.
+	 * - Aside from that, not really useful.
+	 */
+	__itcmStart = ORIGIN(ITCM);
+	__itcmLength = (__itcmBlockCount << 15);
+	__dtcmStart = ORIGIN(DTCM);
+	__dtcmLength = @BOARD_DTCM_SIZE@ - __itcmLength;
+	
+	/* Calculate the location of the stack.
+	 * - EABI stack grows "up" not down.
+	 * - Must offset by 4, as [sp] by default should be a valid address.
+	 */
+	__stackStart = ORIGIN(DTCM) + __dtcmLength - 4;
 
 	/* Handle ARM unwind information.
 	 * - It needs to be within -0x40000000 to +0x3FFFFFFF of the C++ code being run.

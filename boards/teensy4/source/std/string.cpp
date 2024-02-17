@@ -31,7 +31,7 @@ void* _memcpy(void* dest, const void* src, std::size_t count)
 		// Must be word aligned, or we crash.
 #if 1
 		// LLVM does not use LDRD/STRD, which is significantly faster.
-		__asm volatile(R"(
+		asm volatile(R"(
 	pli [%[src]]
 1:	pli [%[src], #+32]
 	ldrd r0, r1, [%[src]]
@@ -41,9 +41,9 @@ void* _memcpy(void* dest, const void* src, std::size_t count)
 	cmp %[dest], %[end]
 	bne 1b
 )"
-					   : [dest] "+r"(dest), [src] "+r"(src)
-					   : [end] "r"(endDW)
-					   : "r0", "r1", "memory");
+					 : [dest] "+r"(dest), [src] "+r"(src)
+					 : [end] "r"(endDW)
+					 : "r0", "r1", "memory");
 #else
 		uint32_t*       destW = reinterpret_cast<uint32_t*>(dest);
 		const uint32_t* srcW  = reinterpret_cast<const uint32_t*>(src);
@@ -58,7 +58,7 @@ void* _memcpy(void* dest, const void* src, std::size_t count)
 	void* endW = reinterpret_cast<uint32_t*>(endDW) + num4;
 	if (!isAligned || (num4 > 0)) {
 #if 0
-		__asm volatile(R"(
+		asm volatile(R"(
 	pli [%[src]]
 1:	pli [%[src], #+32]
 	ldr r0, [%[src]]
@@ -84,7 +84,7 @@ void* _memcpy(void* dest, const void* src, std::size_t count)
 	void* endB = reinterpret_cast<uint8_t*>(dest) + count;
 	if (num1 > 0) {
 #if 0
-		__asm volatile(R"(
+		asm volatile(R"(
 	pli [%[src]]
 1:	pli [%[src], #+32]
 	ldrb r0, [%[src]]
@@ -145,15 +145,15 @@ void* _memset(void* dest, uint8_t value, std::size_t count)
 		// Must be aligned, or this crashes.
 #if 1
 		// LLVM does not use STRD, which is significantly faster.
-		__asm volatile(R"(
+		asm volatile(R"(
 1:	strd %[value], %[value], [%[dest]]
 	add %[dest], 8
 	cmp %[dest], %[end]
 	bne 1b
 )"
-					   : [dest] "+r"(dest)
-					   : [end] "r"(endDW), [value] "r"(valueW)
-					   : "memory");
+					 : [dest] "+r"(dest)
+					 : [end] "r"(endDW), [value] "r"(valueW)
+					 : "memory");
 #else
 		uint32_t* destW = reinterpret_cast<uint32_t*>(dest);
 		for (; destW < endDW; destW += 2) {
@@ -167,7 +167,7 @@ void* _memset(void* dest, uint8_t value, std::size_t count)
 	void* endW = reinterpret_cast<uint32_t*>(endDW) + num4;
 	if (!isAligned || (num4 > 0)) {
 #if 0
-		__asm volatile(R"(
+		asm volatile(R"(
 1:	str %[value], [%[dest]]
 	add %[dest], 4
 	cmp %[dest], %[end]
@@ -188,7 +188,7 @@ void* _memset(void* dest, uint8_t value, std::size_t count)
 	void* endB = reinterpret_cast<uint8_t*>(dest) + count;
 	if (num1 > 0) {
 #if 0
-		__asm volatile(R"(
+		asm volatile(R"(
 1:	strb %[value], [%[dest]]
 	add %[dest], 1
 	cmp %[dest], %[end]

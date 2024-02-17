@@ -74,31 +74,41 @@ void _start_internal(void)
 		boot_memcpy(&__dtcmStart, &__fastDataAddress, reinterpret_cast<std::size_t>(&__fastDataLength));
 	}
 
-	// Ensure all data is present.
-	__asm volatile("dsb" ::: "memory");
+	// Wait until everything is synchronized again.
+	asm volatile(R"(
+		isb
+		dsb
+		dmb
+	)" ::
+					 : "memory");
 
-	{ // Zero BSS area
+	if (false) { // Zero BSS area
 		extern std::size_t __bssStart; // BSS Start
 		extern std::size_t __bssLength; // BSS End
 		boot_memset(&__bssStart, 0x00, reinterpret_cast<std::size_t>(&__bssLength));
 	}
 
 	// Initialize Internal Memory
-	if (BOARD_IRAM_SIZE > 0) {
+	if (BOARD_IRAM_SIZE > 0 && false) {
 		extern std::size_t __board_iram_address;
 		extern std::size_t __board_iram_length;
 		boot_memcpy(BOARD_IRAM, &__board_iram_address, reinterpret_cast<std::size_t>(&__board_iram_length));
 	}
 
 	// Initialize External Memory
-	if (BOARD_ERAM_SIZE > 0) {
+	if (BOARD_ERAM_SIZE > 0 && false) {
 		extern std::size_t __board_eram_address;
 		extern std::size_t __board_eram_length;
 		boot_memcpy(BOARD_ERAM, &__board_eram_address, reinterpret_cast<std::size_t>(&__board_eram_length));
 	}
 
-	// Ensure all data is present.
-	__asm volatile("dsb" ::: "memory");
+	// Wait until everything is synchronized again.
+	asm volatile(R"(
+		isb
+		dsb
+		dmb
+	)" ::
+					 : "memory");
 
 	// Run pre-init.
 	{
@@ -137,12 +147,40 @@ extern "C" SECTION_CODE_BOOT [[gnu::used, gnu::naked, gnu::noreturn]]
 void _start(void) noexcept
 {
 	// Set up FlexRAM properly.
-	__asm volatile("str %[val], %[gpr]" : [gpr] "=m"(iomuxc::gpr::GPR17.ref) : [val] "r"(&__flexramBankConfig) : "memory");
-	__asm volatile("str %[val], %[gpr]" : [gpr] "=m"(iomuxc::gpr::GPR16.ref) : [val] "r"(0b001));
+	asm volatile("str %[val], %[gpr]" : [gpr] "=m"(iomuxc::gpr::GPR17.ref) : [val] "r"(&__flexramBankConfig) : "memory");
+	asm volatile("str %[val], %[gpr]" : [gpr] "=m"(iomuxc::gpr::GPR16.ref) : [val] "r"(0x00200007) : "memory");
+
+	// FlexRAM may take a bit to "warm up", so we purposefully wait 1 cycle per bank here.
+	asm volatile(R"(
+		nop
+		nop
+		nop
+		nop
+		nop
+		nop
+		nop
+		nop
+		nop
+		nop
+		nop
+		nop
+		nop
+		nop
+		nop
+		nop)" ::
+					 :);
 
 	// Before we call any standard function, we need to set up the stack pointer.
-	__asm volatile("mov sp, %0" : : "r"(&__stackStart));
+	asm volatile("mov sp, %[stack]" : : [stack] "r"(&__stackStart) : "memory");
+
+	// Wait until everything is synchronized again.
+	asm volatile(R"(
+		isb
+		dsb
+		dmb
+	)" ::
+					 : "memory");
 
 	// Once it's been set up, we can Branch to the actual start function which can do more complication things. It is important to use the 'B' instruction here instead of the 'BX', 'BL' or similar instructions, as 'B' simply jumps instead of branching.
-	__asm volatile("b %P0" : : "i"(&_start_internal));
+	asm volatile("b %P0" : : "i"(&_start_internal));
 }
