@@ -22,7 +22,7 @@
 // This is critical, so ensure it's byte aligned.
 #pragma pack(push, 1)
 
-namespace iomuxc {
+namespace imxrt1060::iomuxc {
 	namespace gpr {
 		static registerReadWrite<0x400AC000> GPR0;
 		static volatile std::size_t&         rawGPR0 = *reinterpret_cast<std::size_t*>(0x400AC000);
@@ -1013,6 +1013,6 @@ namespace iomuxc {
 	static registerReadWrite<0x401F878C> CANFD_IPP_IND_CANRX_SELECT_INPUT;
 	static volatile std::size_t&         rawCANFD_IPP_IND_CANRX_SELECT_INPUT = *reinterpret_cast<std::size_t*>(0x401F878C);
 
-} // namespace iomuxc
+} // namespace imxrt1060::iomuxc
 
 #pragma pack(pop)

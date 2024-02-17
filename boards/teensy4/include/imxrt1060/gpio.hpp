@@ -22,7 +22,7 @@
 // This is critical, so ensure it's byte aligned.
 #pragma pack(push, 1)
 
-namespace gpio {
+namespace imxrt1060::gpio {
 	enum class direction : bool {
 		Input  = false,
 		Output = true,
@@ -79,6 +79,6 @@ namespace gpio {
 	static registerBlock<0x42004000> GPIO7;
 	static registerBlock<0x42008000> GPIO8;
 	static registerBlock<0x4200C000> GPIO9;
-} // namespace gpio
+} // namespace imxrt1060::gpio
 
 #pragma pack(pop)

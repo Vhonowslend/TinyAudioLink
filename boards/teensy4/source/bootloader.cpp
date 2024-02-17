@@ -18,60 +18,36 @@
 #include <cinttypes>
 #include <cstddef>
 #include <cstring>
+#include "arm/cm7.hpp"
 #include "board.h"
 #include "imxrt1060/bootdata.hpp"
-#include "imxrt1060/cm7.hpp"
 #include "imxrt1060/gpio.hpp"
 #include "imxrt1060/imagevectortable.hpp"
 #include "imxrt1060/iomuxc.hpp"
 #include "imxrt1060/nvic.hpp"
-#include "kinetis/flashloader.hpp"
+#include "nxp/kinetisflashloader.hpp"
 
 // Main Application
 extern "C" int main();
 
-extern std::size_t __flexramBankConfig; // FlexRAM Bank Configuration
-extern std::size_t __stackStart; // Stack Address
-
-[[gnu::used, gnu::section(".bootData")]] static bootData_t __bootData = {};
-
-[[gnu::used, gnu::section(".flashLoader")]] static flashLoader_t __flashLoader = {};
-
-[[gnu::used, gnu::section(".interruptVectorTable")]] nvic::interruptVectorTable_t __interruptVectorTable = {
-	.initialStackPointer = &__stackStart,
-	.reset               = &_start,
-};
-
-[[gnu::used, gnu::section(".imageVectorTable")]] static imageVectorTable_t __imageVectorTable = {
-	//	.entryPoint = &_start,
-	.bootData = &__bootData,
-	.self     = &__imageVectorTable,
-};
+extern std::size_t __flexram_bank_config; // FlexRAM Bank Configuration
+extern std::size_t __stack_start; // Stack Address
 
 extern "C" SECTION_CODE_BOOT [[gnu::used, gnu::visibility("default"), gnu::noinline, gnu::noreturn]]
 void _start_internal(void)
 {
-	// Do apparently nothing, but its needed or the chip just freezes.
-	// - Reduce bias current by 30% on ACMP1, ACMP3.
-	// - Increase bias current by 30% on ACMP1, ACMP3.
-	iomuxc::gpr::GPR14 = 0b101010100000000000000000;
-
-	// Set Interrupt Vector Offset Register (VTOR)
-	iomuxc::gpr::GPR16 |= (size_t)&__interruptVectorTable;
-	cm7::VTOR = (size_t)&__interruptVectorTable;
-
 	{ // Initialize ITCM
-		extern std::size_t __fastCodeLength; // Flash Fast Code End
-		extern std::size_t __fastCodeAddress; // Flash Fast Code Address
-		extern std::size_t __itcmStart; // ITCM Address
-		boot_memcpy(&__itcmStart, &__fastCodeAddress, reinterpret_cast<std::size_t>(&__fastCodeLength));
+		extern std::size_t __fast_code_length; // Flash Fast Code End
+		extern std::size_t __fast_code_address; // Flash Fast Code Address
+		extern std::size_t __itcm_start; // ITCM Address
+		boot_memcpy(&__itcm_start, &__fast_code_address, reinterpret_cast<std::size_t>(&__fast_code_length));
 	}
 
 	{ // Initialize DTCM
-		extern std::size_t __fastDataLength; // Flash Fast Data End
-		extern std::size_t __fastDataAddress; // Flash Fast Data Address
-		extern std::size_t __dtcmStart; // DTCM Address
-		boot_memcpy(&__dtcmStart, &__fastDataAddress, reinterpret_cast<std::size_t>(&__fastDataLength));
+		extern std::size_t __fast_data_length; // Flash Fast Data End
+		extern std::size_t __fast_data_address; // Flash Fast Data Address
+		extern std::size_t __dtcm_start; // DTCM Address
+		boot_memcpy(&__dtcm_start, &__fast_data_address, reinterpret_cast<std::size_t>(&__fast_data_length));
 	}
 
 	// Wait until everything is synchronized again.
@@ -83,9 +59,9 @@ void _start_internal(void)
 					 : "memory");
 
 	if (false) { // Zero BSS area
-		extern std::size_t __bssStart; // BSS Start
-		extern std::size_t __bssLength; // BSS End
-		boot_memset(&__bssStart, 0x00, reinterpret_cast<std::size_t>(&__bssLength));
+		extern std::size_t __bss_start; // BSS Start
+		extern std::size_t __bss_length; // BSS End
+		boot_memset(&__bss_start, 0x00, reinterpret_cast<std::size_t>(&__bss_length));
 	}
 
 	// Initialize Internal Memory
@@ -109,6 +85,14 @@ void _start_internal(void)
 		dmb
 	)" ::
 					 : "memory");
+
+	// Do apparently nothing.
+	// - Reduce bias current by 30% on ACMP1, ACMP3.
+	// - Increase bias current by 30% on ACMP1, ACMP3.
+	imxrt1060::iomuxc::gpr::GPR14 = 0b101010100000000000000000;
+
+	// Set up NVIC properly.
+	imxrt1060::nvic::initialize();
 
 	// Run pre-init.
 	{
@@ -147,8 +131,8 @@ extern "C" SECTION_CODE_BOOT [[gnu::used, gnu::naked, gnu::noreturn]]
 void _start(void) noexcept
 {
 	// Set up FlexRAM properly.
-	asm volatile("str %[val], %[gpr]" : [gpr] "=m"(iomuxc::gpr::GPR17.ref) : [val] "r"(&__flexramBankConfig) : "memory");
-	asm volatile("str %[val], %[gpr]" : [gpr] "=m"(iomuxc::gpr::GPR16.ref) : [val] "r"(0x00200007) : "memory");
+	asm volatile("str %[val], %[gpr]" : [gpr] "=m"(imxrt1060::iomuxc::gpr::GPR17.ref) : [val] "r"(&__flexram_bank_config) : "memory");
+	asm volatile("str %[val], %[gpr]" : [gpr] "=m"(imxrt1060::iomuxc::gpr::GPR16.ref) : [val] "r"(0x00200007) : "memory");
 
 	// FlexRAM may take a bit to "warm up", so we purposefully wait 1 cycle per bank here.
 	asm volatile(R"(
@@ -172,7 +156,7 @@ void _start(void) noexcept
 
 #ifdef USE_TEENSY_IVT
 	// Before we call any standard function, we need to set up the stack pointer.
-	asm volatile("mov sp, %[stack]" : : [stack] "r"(&__stackStart) : "memory");
+	asm volatile("mov sp, %[stack]" : : [stack] "r"(&__stack_start) : "memory");
 #endif
 
 	// Wait until everything is synchronized again.

@@ -21,16 +21,17 @@
 // This is critical, so ensure it's byte aligned.
 #pragma pack(push, 1)
 
-extern std::size_t __stackStart;
-
-namespace nvic {
+namespace imxrt1060::nvic {
 	typedef void (*interrupt_function_t)();
 
-	struct interruptVectorTable_t {
-		std::size_t*         initialStackPointer = &__stackStart;
-		interrupt_function_t reset               = 0;
-		interrupt_function_t interrupts[240]     = {0};
+	struct interrupt_vector_table_t {
+		std::size_t*         initialStackPointer;
+		interrupt_function_t reset;
+		interrupt_function_t interrupts[240] = {0};
 	};
-} // namespace nvic
+	extern interrupt_vector_table_t __interrupt_vector_table;
+
+	void initialize();
+} // namespace imxrt1060::nvic
 
 #pragma pack(pop)

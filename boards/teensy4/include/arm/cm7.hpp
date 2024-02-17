@@ -17,32 +17,20 @@
 #pragma once
 #include <cinttypes>
 #include <cstddef>
+#include "register.hpp"
 
 // This is critical, so ensure it's byte aligned.
 #pragma pack(push, 1)
 
-// Start of the Flash image.
-extern std::size_t __flash_start;
-
-// Length of the entire flash image.
-extern std::size_t __flash_length;
-
-namespace imxrt1060 {
-	/** Boot Data
-	 * - IMXRT1060RM_rev1_Processor_Manual.pdf: 8.7.1.2
-	 */
-	struct boot_data_t {
-		// 0x00 Absolute address of the image.
-		std::size_t start = reinterpret_cast<std::size_t>(&__flash_start);
-		// 0x04 Length of the image.
-		std::size_t length = reinterpret_cast<std::size_t>(&__flash_length);
-		// 0x08 Plugin flags, see 8.8
-		uint32_t plugin = 0; // Some official images have a value here.
-	};
-	static constexpr std::size_t boot_data_sz = 0xC;
-	static_assert(sizeof(boot_data_t) == boot_data_sz, "Boot Data must be 12 bytes long.");
-
-	extern boot_data_t __boot_data;
-} // namespace imxrt1060
+namespace arm::cm7 {
+	static registerReadWrite<0xE000E008> ACTLR;
+	static registerReadWrite<0xE000E010> SYST_CSR;
+	static registerReadWrite<0xE000E014> SYST_RVR;
+	static registerReadWrite<0xE000E018> SYST_CVR;
+	static registerReadOnly<0xE000E01C>  SYST_CALIB;
+	static registerReadWrite<0xE000ED00> CPUID;
+	static registerReadWrite<0xE000ED04> ICSR;
+	static registerReadWrite<0xE000ED08> VTOR;
+} // namespace arm::cm7
 
 #pragma pack(pop)
