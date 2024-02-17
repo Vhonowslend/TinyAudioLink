@@ -48,9 +48,18 @@ extern std::size_t* __stackStart; // Stack Address
 	.reset               = &_start,
 };
 
-extern "C" [[gnu::used, gnu::visibility("default"), gnu::noinline, gnu::noreturn]]
+extern "C" SECTION_CODE_BOOT [[gnu::used, gnu::visibility("default"), gnu::noinline, gnu::noreturn]]
 void _start_internal(void)
 {
+	// Do apparently nothing, but its needed or the chip just freezes.
+	// - Reduce bias current by 30% on ACMP1, ACMP3.
+	// - Increase bias current by 30% on ACMP1, ACMP3.
+	iomuxc::gpr::GPR14 = 0b101010100000000000000000;
+
+	// Set Interrupt Vector Offset Register (VTOR)
+	iomuxc::gpr::GPR16 |= (size_t)&interruptVectorTable;
+	cm7::VTOR = (size_t)&interruptVectorTable;
+
 	// Initialize ITCM
 	extern std::size_t __fastCodeLength; // Flash Fast Code End
 	extern std::size_t __fastCodeAddress; // Flash Fast Code Address
@@ -62,6 +71,9 @@ void _start_internal(void)
 	extern std::size_t __fastDataAddress; // Flash Fast Data Address
 	extern std::size_t __dtcmStart; // DTCM Address
 	boot_memcpy(&__dtcmStart, &__fastDataAddress, reinterpret_cast<std::size_t>(&__fastDataLength));
+
+	// Ensure all data is present.
+	__asm volatile("dsb" ::: "memory");
 
 	// Zero BSS area
 	extern std::size_t __bssStart; // BSS Start
@@ -90,46 +102,16 @@ void _start_internal(void)
 	__builtin_unreachable();
 }
 
-extern "C" [[gnu::used, gnu::section(".flashCode"), gnu::naked, gnu::noreturn]]
+extern "C" SECTION_CODE_BOOT [[gnu::used, gnu::naked, gnu::noreturn]]
 void _start(void) noexcept
 {
-	// We can't use our nice register wrappers here, so raw writes to register it is.
-	// Eventually move some of this into DCD:
-	// - We can do the whole FlexRAM setup in there.
-	// - Can't do the stack pointer AFAIK.
+	// Set up FlexRAM properly.
+	__asm volatile("str %[val], %[gpr]" : [gpr] "=m"(iomuxc::gpr::GPR17.ref) : [val] "r"(&__flexramBankConfig) : "memory");
+	__asm volatile("str %[val], %[gpr]" : [gpr] "=m"(iomuxc::gpr::GPR16.ref) : [val] "r"(0b001));
 
-	// Set up FlexRAM Bank Config
-	__asm volatile("str %[val], %[gpr]" : [gpr] "=m"(iomuxc::gpr::rawGPR17) : [val] "r"(reinterpret_cast<std::size_t>(&__flexramBankConfig)) : "memory");
-	//iomuxc::gpr::rawGPR17 = reinterpret_cast<std::size_t>(&__flexramBankConfig);
-
-	// Do two things.
-	// - Set FLEXRAM_BANK_CFG_SEL to 1
-	// - Set CM7_INIT_VTOR to the same as VTOR.
-	__asm volatile("str %[val], %[gpr]" : [gpr] "=m"(iomuxc::gpr::rawGPR16) : [val] "r"(0b001000000000000000000111) : "memory");
-	//iomuxc::gpr::rawGPR16 = static_cast<std::size_t>(0b001000000000000000000111);
-
-	// Set Interrupt Vector Offset
-	// - [0:6] is Read As Zero (ignored)
-	// - [7:31] is the actualy address.
-	// Address must be... 128 byte aligned?
-	__asm volatile(R"(
-		str %[ivt], %[vtor]
-	)"
-				   : [vtor] "=m"(cm7::VTOR.ref)
-				   : [ivt] "r"(&interruptVectorTable)
-				   : "memory");
-
-	// Do apparently nothing, but its needed or the chip just freezes.
-	// - Reduce bias current by 30% on ACMP1, ACMP3.
-	// - Increase bias current by 30% on ACMP1, ACMP3.
-	__asm volatile("str %[val], %[gpr]" : [gpr] "=m"(iomuxc::gpr::rawGPR14) : [val] "r"(0b101010100000000000000000) : "memory");
-	//iomuxc::gpr::GPR14 = static_cast<std::size_t>(0b101010100000000000000000);
-
-	// Set Stack Pointer
+	// Before we call any standard function, we need to set up the stack pointer.
 	__asm volatile("mov sp, %0" : : "r"(&__stackStart));
 
-	// Hand off control to actual code, since we now have a stack and memory.
-	// - Do not use BX, since it sets a return address!
+	// Once it's been set up, we can Branch to the actual start function which can do more complication things. It is important to use the 'B' instruction here instead of the 'BX', 'BL' or similar instructions, as 'B' simply jumps instead of branching.
 	__asm volatile("b %P0" : : "i"(&_start_internal));
-	//_start_internal();
 }

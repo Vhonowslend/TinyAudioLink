@@ -109,8 +109,7 @@ void* _memcpy(void* dest, const void* src, std::size_t count)
 	return dest;
 }
 
-extern "C" SECTION_CODE_FAST
-void* memcpy(void* dest, const void* src, size_t count)
+extern "C" SECTION_CODE_FAST void* memcpy(void* dest, const void* src, size_t count)
 {
 	return _memcpy(dest, src, count);
 };
@@ -209,8 +208,7 @@ void* _memset(void* dest, uint8_t value, std::size_t count)
 	return dest;
 }
 
-extern "C" SECTION_CODE_FAST
-void* memset(void* dest, uint8_t value, size_t count)
+extern "C" SECTION_CODE_FAST void* memset(void* dest, uint8_t value, size_t count)
 {
 	return _memset(dest, value, count);
 }
