@@ -180,7 +180,7 @@ SECTIONS
 	 * - EABI stack grows "up" not down.
 	 * - Must offset by 4, as [sp] by default should be a valid address.
 	 */
-	__stackStart = ORIGIN(DTCM) + __dtcmLength - 4;
+	__stackStart = ORIGIN(DTCM) + __dtcmLength;
 
 	/* Handle ARM unwind information.
 	 * - It needs to be within -0x40000000 to +0x3FFFFFFF of the C++ code being run.

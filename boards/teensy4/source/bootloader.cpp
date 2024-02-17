@@ -30,22 +30,22 @@
 // Main Application
 extern "C" int main();
 
-extern std::size_t  __flexramBankConfig; // FlexRAM Bank Configuration
-extern std::size_t* __stackStart; // Stack Address
+extern std::size_t __flexramBankConfig; // FlexRAM Bank Configuration
+extern std::size_t __stackStart; // Stack Address
 
 [[gnu::used, gnu::section(".bootData")]] static bootData_t __bootData = {};
 
 [[gnu::used, gnu::section(".flashLoader")]] static flashLoader_t __flashLoader = {};
 
-[[gnu::used, gnu::section(".imageVectorTable")]] static imageVectorTable_t __imageVectorTable = {
-	.entryPoint = &_start,
-	.bootData   = &__bootData,
-	.self       = &__imageVectorTable,
+[[gnu::used, gnu::section(".interruptVectorTable")]] nvic::interruptVectorTable_t __interruptVectorTable = {
+	.initialStackPointer = &__stackStart,
+	.reset               = &_start,
 };
 
-[[gnu::used, gnu::section(".interruptVectorTable")]] static nvic::interruptVectorTable_t interruptVectorTable = {
-	.initialStackPointer = __stackStart,
-	.reset               = &_start,
+[[gnu::used, gnu::section(".imageVectorTable")]] static imageVectorTable_t __imageVectorTable = {
+	//	.entryPoint = &_start,
+	.bootData = &__bootData,
+	.self     = &__imageVectorTable,
 };
 
 extern "C" SECTION_CODE_BOOT [[gnu::used, gnu::visibility("default"), gnu::noinline, gnu::noreturn]]
@@ -57,8 +57,8 @@ void _start_internal(void)
 	iomuxc::gpr::GPR14 = 0b101010100000000000000000;
 
 	// Set Interrupt Vector Offset Register (VTOR)
-	iomuxc::gpr::GPR16 |= (size_t)&interruptVectorTable;
-	cm7::VTOR = (size_t)&interruptVectorTable;
+	iomuxc::gpr::GPR16 |= (size_t)&__interruptVectorTable;
+	cm7::VTOR = (size_t)&__interruptVectorTable;
 
 	{ // Initialize ITCM
 		extern std::size_t __fastCodeLength; // Flash Fast Code End
@@ -170,8 +170,10 @@ void _start(void) noexcept
 		nop)" ::
 					 :);
 
+#ifdef USE_TEENSY_IVT
 	// Before we call any standard function, we need to set up the stack pointer.
 	asm volatile("mov sp, %[stack]" : : [stack] "r"(&__stackStart) : "memory");
+#endif
 
 	// Wait until everything is synchronized again.
 	asm volatile(R"(
