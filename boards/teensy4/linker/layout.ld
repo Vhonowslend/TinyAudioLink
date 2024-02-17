@@ -74,7 +74,16 @@ SECTIONS
 	} > FLASH
 
 	.flash.code ALIGN(4K) : {
-		KEEP(*(.text._start))
+		KEEP(*(.text._start))		
+		*(.flashCode)
+	} > FLASH
+
+	.flash.data ALIGN(4K) : {
+		*(SORT_BY_ALIGNMENT(SORT_BY_NAME(.flashData)))
+	} > FLASH
+
+	.flash.fastCode ALIGN(8) : {
+		. = . + 32; /* Use Memory Protection Unit to trap a null pointer dereference. */
 
 		KEEP(*(.init))
 		KEEP(*(.fini))
@@ -94,16 +103,6 @@ SECTIONS
 		KEEP (*(.fini_array))
 		PROVIDE_HIDDEN(__fini_array_end = .);
 
-		*(.flashCode)
-	} > FLASH
-
-	.flash.data ALIGN(4K) : {
-		*(SORT_BY_ALIGNMENT(SORT_BY_NAME(.flashData)))
-	} > FLASH
-
-	.flash.fastCode ALIGN(8) : {
-		. = . + 32; /* Use Memory Protection Unit to trap a null pointer dereference. */
-
 		*(.fastCode)
 		*(.text*)
 	} > ITCM AT> FLASH
@@ -117,35 +116,35 @@ SECTIONS
 	__fastDataLength = SIZEOF(.flash.fastData);
 	__fastDataAddress = LOADADDR(.flash.fastData);
 
-	.flash.iram ALIGN(8) : {
-		board_iram = .;
-
+	.flash.iramCode ALIGN(8) : {
+		__board_iram = .;
 		*(.iramCode);
-		
-		. = ALIGN(4);
-		*(SORT_BY_ALIGNMENT(SORT_BY_NAME(.intmemData)));
-
-		. = ALIGN(4);
-		board_iram_free = .;
 	} > SRAM AT> FLASH
-	board_iram_size = @BOARD_SRAM_SIZE@;
-	__board_iram_address = LOADADDR(.flash.iram);
-	__board_iram_length = SIZEOF(.flash.iram);
 
-	.flash.eram ALIGN(8) : {
-		board_eram = .;
-
-		*(.eramCode);
+	.flash.iramData ALIGN(4) : {
+		*(SORT_BY_ALIGNMENT(SORT_BY_NAME(.iramData)));
 
 		. = ALIGN(4);
+		__board_iram_free = .;
+	} > SRAM AT> FLASH
+	__board_iram_size = @BOARD_SRAM_SIZE@;
+	__board_iram_address = LOADADDR(.flash.iramCode);
+	__board_iram_length = __board_iram_free - __board_iram;
+
+	.flash.eramCode ALIGN(8) : {
+		__board_eram = .;
+		*(.eramCode);
+	} > SRAM AT> FLASH
+
+	.flash.eramData ALIGN(4) : {
 		*(SORT_BY_ALIGNMENT(SORT_BY_NAME(.eramData)));
 
 		. = ALIGN(4);
-		board_eram_free = .;
+		__board_eram_free = .;
 	} > SRAM AT> FLASH
-	board_eram_size = @BOARD_SRAM_SIZE@;
-	__board_eram_address = LOADADDR(.flash.iram);
-	__board_eram_length = SIZEOF(.flash.iram);
+	__board_eram_size = @BOARD_SRAM_SIZE@;
+	__board_eram_address = LOADADDR(.flash.eramCode);
+	__board_eram_length = __board_eram_free - __board_eram;
 
 	.flash : {
 		__flashImageEnd = .;

@@ -60,38 +60,41 @@ void _start_internal(void)
 	iomuxc::gpr::GPR16 |= (size_t)&interruptVectorTable;
 	cm7::VTOR = (size_t)&interruptVectorTable;
 
-	// Initialize ITCM
-	extern std::size_t __fastCodeLength; // Flash Fast Code End
-	extern std::size_t __fastCodeAddress; // Flash Fast Code Address
-	extern std::size_t __itcmStart; // ITCM Address
-	boot_memcpy(&__itcmStart, &__fastCodeAddress, reinterpret_cast<std::size_t>(&__fastCodeLength));
+	{ // Initialize ITCM
+		extern std::size_t __fastCodeLength; // Flash Fast Code End
+		extern std::size_t __fastCodeAddress; // Flash Fast Code Address
+		extern std::size_t __itcmStart; // ITCM Address
+		boot_memcpy(&__itcmStart, &__fastCodeAddress, reinterpret_cast<std::size_t>(&__fastCodeLength));
+	}
 
-	// Initialize DTCM
-	extern std::size_t __fastDataLength; // Flash Fast Data End
-	extern std::size_t __fastDataAddress; // Flash Fast Data Address
-	extern std::size_t __dtcmStart; // DTCM Address
-	boot_memcpy(&__dtcmStart, &__fastDataAddress, reinterpret_cast<std::size_t>(&__fastDataLength));
+	{ // Initialize DTCM
+		extern std::size_t __fastDataLength; // Flash Fast Data End
+		extern std::size_t __fastDataAddress; // Flash Fast Data Address
+		extern std::size_t __dtcmStart; // DTCM Address
+		boot_memcpy(&__dtcmStart, &__fastDataAddress, reinterpret_cast<std::size_t>(&__fastDataLength));
+	}
 
 	// Ensure all data is present.
 	__asm volatile("dsb" ::: "memory");
 
-	// Zero BSS area
-	extern std::size_t __bssStart; // BSS Start
-	extern std::size_t __bssLength; // BSS End
-	boot_memset(&__bssStart, 0x00, reinterpret_cast<std::size_t>(&__bssLength));
+	{ // Zero BSS area
+		extern std::size_t __bssStart; // BSS Start
+		extern std::size_t __bssLength; // BSS End
+		boot_memset(&__bssStart, 0x00, reinterpret_cast<std::size_t>(&__bssLength));
+	}
 
 	// Initialize Internal Memory
 	if (BOARD_IRAM_SIZE > 0) {
 		extern std::size_t __board_iram_address;
 		extern std::size_t __board_iram_length;
-		boot_memcpy(&board_iram, &__board_iram_address, reinterpret_cast<std::size_t>(&__board_iram_length));
+		boot_memcpy(BOARD_IRAM, &__board_iram_address, reinterpret_cast<std::size_t>(&__board_iram_length));
 	}
 
 	// Initialize External Memory
 	if (BOARD_ERAM_SIZE > 0) {
 		extern std::size_t __board_eram_address;
 		extern std::size_t __board_eram_length;
-		boot_memcpy(&board_eram, &__board_eram_address, reinterpret_cast<std::size_t>(&__board_eram_length));
+		boot_memcpy(BOARD_ERAM, &__board_eram_address, reinterpret_cast<std::size_t>(&__board_eram_length));
 	}
 
 	// Ensure all data is present.

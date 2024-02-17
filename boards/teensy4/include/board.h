@@ -16,18 +16,20 @@
 /** Internal Memory starting address.
  * Absolute address of internal memory.
  */
-extern size_t board_iram;
+extern size_t __board_iram;
+#define BOARD_IRAM ((void*)&__board_iram)
 
 /** First free byte of Internal Memory.
  * Absolute address of the first unused byte in internal memory.
  */
-extern size_t board_iram_free;
+extern size_t __board_iram_free;
+#define BOARD_IRAM_FREE ((void*)&__board_iram_free)
 
 /** Size of Internal Memory
  * Absolute size of internal memory. Can be 0.
  */
-extern size_t board_iram_size;
-#define BOARD_IRAM_SIZE ((size_t) & board_iram_size)
+extern size_t __board_iram_size;
+#define BOARD_IRAM_SIZE ((size_t) & __board_iram_size)
 
 /** Mark code or data as residing in Internal Memory
  * This code and data can't be used before 'main()'.
@@ -38,18 +40,20 @@ extern size_t board_iram_size;
 /** External Memory starting address.
  * Absolute address of internal memory.
  */
-extern size_t board_eram;
+extern size_t __board_eram;
+#define BOARD_ERAM ((void*)&__board_eram)
 
 /** First free byte of External Memory.
  * Absolute address of the first unused byte in internal memory.
  */
-extern size_t board_eram_free;
+extern size_t __board_eram_free;
+#define BOARD_ERAM_FREE ((void*)&__board_eram_free)
 
 /** Size of External Memory
  * Absolute size of external memory. Can be 0.
  */
-extern size_t board_eram_size;
-#define BOARD_ERAM_SIZE ((size_t) & board_eram_size)
+extern size_t __board_eram_size;
+#define BOARD_ERAM_SIZE ((size_t) & __board_eram_size)
 
 /** Mark code or data as residing in External Memory
  * This code and data can't be used before 'main()'.
