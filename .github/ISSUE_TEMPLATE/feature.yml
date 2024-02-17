@@ -1,0 +1,19 @@
+name: Feature Request
+description: File a feature request
+title: "[Feature]: "
+labels: ["type:feature", triage"]
+body:
+  - type: textarea
+    id: description
+    attributes:
+      label: "Describe the Feature"
+      description: "Please include expected behavior, as well as usage cases."
+  - type: dropdown
+    id: board
+    attributes:
+      label: "Affected Board(s)"
+      description: "Which board(s) would this feature be useful on?"
+      multiple: true
+      options:
+        - "Teensy 4.x (4.0, 4.1 and MultiMod)"
+    validations:

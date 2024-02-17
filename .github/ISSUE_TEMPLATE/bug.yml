@@ -1,0 +1,24 @@
+name: Bug Report
+description: File a bug report
+title: "[Bug]: "
+labels: ["type:bug", triage"]
+body:
+  - type: textarea
+    id: description
+    attributes:
+      label: "Describe the Bug"
+      description: "Please include expected and actual behavior, as well as reproduction steps."
+  - type: dropdown
+    id: board
+    attributes:
+      label: "Affected Board(s)"
+      description: "Which board(s) did you encounter the issue on?"
+      multiple: true
+      options:
+        - "Teensy 4.x (4.0, 4.1 and MultiMod)"
+    validations:
+  - type: input
+    id: commit
+    attributes:
+      label: "Last known working Commit"
+      description: "The hash of the last known working commit. Leave blank if you don't know."
