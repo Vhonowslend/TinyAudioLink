@@ -97,7 +97,35 @@ void _start_internal(void)
 	// Ensure all data is present.
 	__asm volatile("dsb" ::: "memory");
 
+	// Run pre-init.
+	{
+		extern void (*__preinit_array_start[])(void) __attribute__((weak));
+		extern void (*__preinit_array_end[])(void) __attribute__((weak));
+		for (size_t edx = __preinit_array_end - __preinit_array_start, idx = 0; idx < edx; idx++) {
+			__preinit_array_start[idx]();
+		}
+	}
+
+	// Run init.
+	{
+		extern void (*__init_array_start[])(void) __attribute__((weak));
+		extern void (*__init_array_end[])(void) __attribute__((weak));
+		for (size_t edx = __init_array_end - __init_array_start, idx = 0; idx < edx; idx++) {
+			__init_array_start[idx]();
+		}
+	}
+
+	// Run main.
 	main();
+
+	// Run fini.
+	{
+		extern void (*__fini_array_start[])(void) __attribute__((weak));
+		extern void (*__fini_array_end[])(void) __attribute__((weak));
+		for (size_t edx = __fini_array_end - __fini_array_start, idx = 0; idx < edx; idx++) {
+			__fini_array_start[idx]();
+		}
+	}
 
 	__builtin_unreachable();
 }

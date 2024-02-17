@@ -79,17 +79,20 @@ SECTIONS
 		KEEP(*(.init))
 		KEEP(*(.fini))
 
-		__preinit_array_start = .;
+		PROVIDE_HIDDEN(__preinit_array_start = .);
+		KEEP (*(SORT(.preinit_array.*)))
 		KEEP (*(.preinit_array))
-		__preinit_array_end = .;
+		PROVIDE_HIDDEN(__preinit_array_end = .);
 
-		__init_array_start = .;
+		PROVIDE_HIDDEN(__init_array_start = .);
+		KEEP (*(SORT(.init_array.*)))
 		KEEP (*(.init_array))
-		__init_array_end = .;
+		PROVIDE_HIDDEN(__init_array_end = .);
 
-		__fini_array_start = .;
+		PROVIDE_HIDDEN(__fini_array_start = .);
+		KEEP (*(SORT(.fini_array.*)))
 		KEEP (*(.fini_array))
-		__fini_array_end = .;
+		PROVIDE_HIDDEN(__fini_array_end = .);
 
 		*(.flashCode)
 	} > FLASH
