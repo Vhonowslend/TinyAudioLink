@@ -17,6 +17,8 @@
 #include "bootloader.hpp"
 #include <cinttypes>
 #include <cstddef>
+#include <cstring>
+#include "board.h"
 #include "imxrt1060/bootdata.hpp"
 #include "imxrt1060/cm7.hpp"
 #include "imxrt1060/gpio.hpp"
@@ -25,65 +27,65 @@
 #include "imxrt1060/nvic.hpp"
 #include "kinetis/flashloader.hpp"
 
-extern std::size_t __flexramBankConfig; // FlexRAM Bank Configuration
-extern std::size_t __stackStart; // Stack Address
-
-extern std::size_t __fastCodeLength; // Flash Fast Code End
-extern std::size_t __fastCodeAddress; // Flash Fast Code Address
-extern std::size_t __itcmStart; // ITCM Address
-
-extern std::size_t __fastDataLength; // Flash Fast Data End
-extern std::size_t __fastDataAddress; // Flash Fast Data Address
-extern std::size_t __dtcmStart; // DTCM Address
-
-extern std::size_t __bssStart; // BSS Start
-extern std::size_t __bssLength; // BSS End
-
 // Main Application
 extern "C" int main();
+
+extern std::size_t  __flexramBankConfig; // FlexRAM Bank Configuration
+extern std::size_t* __stackStart; // Stack Address
 
 [[gnu::used, gnu::section(".bootData")]] static bootData_t __bootData = {};
 
 [[gnu::used, gnu::section(".flashLoader")]] static flashLoader_t __flashLoader = {};
 
-[[gnu::used, gnu::section(".imageVectorTable")]] static imageVectorTable_t __imageVectorTable{
+[[gnu::used, gnu::section(".imageVectorTable")]] static imageVectorTable_t __imageVectorTable = {
 	.entryPoint = &_start,
 	.bootData   = &__bootData,
 	.self       = &__imageVectorTable,
 };
 
-extern "C" [[gnu::section(".flashCode")]]
-void* flash_memcpy(void* dest, const void* src, std::size_t count)
-{
-#include "memcpy.impl"
-}
-
-extern "C" [[gnu::section(".flashCode")]]
-void* flash_memset(void* dest, uint8_t value, std::size_t count)
-{
-#include "memset.impl"
-}
+[[gnu::used, gnu::section(".interruptVectorTable")]] static nvic::interruptVectorTable_t interruptVectorTable = {
+	.initialStackPointer = __stackStart,
+	.reset               = &_start,
+};
 
 extern "C" [[gnu::used, gnu::visibility("default"), gnu::noinline, gnu::noreturn]]
 void _start_internal(void)
 {
-	static_assert(sizeof(bootData_t) == bootData_sz, "Boot Data must be 12 bytes long.");
-	static_assert(sizeof(imageVectorTable_t) == imageVectorTable_sz, "Image Vector Table must be 32 bytes long.");
-	static_assert(sizeof(flashLoader_t) == falshLoader_sz, "Flash Loader must be 512 bytes long.");
+	// Initialize ITCM
+	extern std::size_t __fastCodeLength; // Flash Fast Code End
+	extern std::size_t __fastCodeAddress; // Flash Fast Code Address
+	extern std::size_t __itcmStart; // ITCM Address
+	boot_memcpy(&__itcmStart, &__fastCodeAddress, reinterpret_cast<std::size_t>(&__fastCodeLength));
 
-	// Need to do these from Flash, since ITCM, DTCM and BSS are not yet initialized.
-	flash_memcpy(&__itcmStart, &__fastCodeAddress, reinterpret_cast<std::size_t>(&__fastCodeLength));
-	flash_memcpy(&__dtcmStart, &__fastDataAddress, reinterpret_cast<std::size_t>(&__fastDataLength));
-	flash_memset(&__bssStart, 0x00, reinterpret_cast<std::size_t>(&__bssLength));
+	// Initialize DTCM
+	extern std::size_t __fastDataLength; // Flash Fast Data End
+	extern std::size_t __fastDataAddress; // Flash Fast Data Address
+	extern std::size_t __dtcmStart; // DTCM Address
+	boot_memcpy(&__dtcmStart, &__fastDataAddress, reinterpret_cast<std::size_t>(&__fastDataLength));
+
+	// Zero BSS area
+	extern std::size_t __bssStart; // BSS Start
+	extern std::size_t __bssLength; // BSS End
+	boot_memset(&__bssStart, 0x00, reinterpret_cast<std::size_t>(&__bssLength));
+
+	// Initialize Internal Memory
+	if (BOARD_IRAM_SIZE > 0) {
+		extern std::size_t __board_iram_address;
+		extern std::size_t __board_iram_length;
+		boot_memcpy(&board_iram, &__board_iram_address, reinterpret_cast<std::size_t>(&__board_iram_length));
+	}
+
+	// Initialize External Memory
+	if (BOARD_ERAM_SIZE > 0) {
+		extern std::size_t __board_eram_address;
+		extern std::size_t __board_eram_length;
+		boot_memcpy(&board_eram, &__board_eram_address, reinterpret_cast<std::size_t>(&__board_eram_length));
+	}
 
 	// Ensure all data is present.
 	__asm volatile("dsb" ::: "memory");
 
-	//try {
 	main();
-	//} catch (...) {
-	//	// Reboot here.
-	//}
 
 	__builtin_unreachable();
 }
@@ -114,7 +116,7 @@ void _start(void) noexcept
 		str %[ivt], %[vtor]
 	)"
 				   : [vtor] "=m"(cm7::VTOR.ref)
-				   : [ivt] "r"(&nvic::interruptVectorTable)
+				   : [ivt] "r"(&interruptVectorTable)
 				   : "memory");
 
 	// Do apparently nothing, but its needed or the chip just freezes.

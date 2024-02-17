@@ -17,23 +17,18 @@
 #pragma once
 #include <cinttypes>
 #include <cstddef>
-#include "../bootloader.hpp"
 
 // This is critical, so ensure it's byte aligned.
 #pragma pack(push, 1)
-
-extern std::size_t __stackStart; // Stack Address
 
 namespace nvic {
 	typedef void (*interrupt_function_t)();
 
 	struct interruptVectorTable_t {
-		std::size_t*         initialStackPointer = &__stackStart;
-		interrupt_function_t reset               = &_start;
+		std::size_t*         initialStackPointer = 0;
+		interrupt_function_t reset               = 0;
 		interrupt_function_t interrupts[240]     = {0};
 	};
-
-	[[gnu::used, gnu::section(".interruptVectorTable")]] static interruptVectorTable_t interruptVectorTable = {};
 } // namespace nvic
 
 #pragma pack(pop)

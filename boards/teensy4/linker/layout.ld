@@ -37,7 +37,7 @@ ENTRY(_start)
 
 SECTIONS
 {
-	.flash.headers : ALIGN(4K) {
+	.flash.headers ALIGN(4K) : {
 		. = ORIGIN(FLASH);
 		__flashImageStart = .;
 
@@ -73,7 +73,7 @@ SECTIONS
 		KEEP(*(.interruptVectorTable))
 	} > FLASH
 
-	.flash.code : ALIGN(4K) {
+	.flash.code ALIGN(4K) : {
 		KEEP(*(.text._start))
 
 		KEEP(*(.init))
@@ -94,7 +94,11 @@ SECTIONS
 		*(.flashCode)
 	} > FLASH
 
-	.flash.fastCode : ALIGN(8) {
+	.flash.data ALIGN(4K) : {
+		*(SORT_BY_ALIGNMENT(SORT_BY_NAME(.flashData)))
+	} > FLASH
+
+	.flash.fastCode ALIGN(8) : {
 		. = . + 32; /* Use Memory Protection Unit to trap a null pointer dereference. */
 
 		*(.fastCode)
@@ -103,16 +107,42 @@ SECTIONS
 	__fastCodeLength = SIZEOF(.flash.fastCode);
 	__fastCodeAddress = LOADADDR(.flash.fastCode);
 
-	.flash.data : ALIGN(4) {
-		*(SORT_BY_ALIGNMENT(SORT_BY_NAME(.flashData)))
-	} > FLASH
-
-	.flash.fastData : ALIGN(4) {
+	.flash.fastData ALIGN(4) : {
 		*(SORT_BY_ALIGNMENT(SORT_BY_NAME(.rodata.*)))
 		*(SORT_BY_ALIGNMENT(SORT_BY_NAME(.data.*)))
 	} > DTCM AT> FLASH
 	__fastDataLength = SIZEOF(.flash.fastData);
 	__fastDataAddress = LOADADDR(.flash.fastData);
+
+	.flash.iram ALIGN(8) : {
+		board_iram = .;
+
+		*(.iramCode);
+		
+		. = ALIGN(4);
+		*(SORT_BY_ALIGNMENT(SORT_BY_NAME(.intmemData)));
+
+		. = ALIGN(4);
+		board_iram_free = .;
+	} > SRAM AT> FLASH
+	board_iram_size = @BOARD_SRAM_SIZE@;
+	__board_iram_address = LOADADDR(.flash.iram);
+	__board_iram_length = SIZEOF(.flash.iram);
+
+	.flash.eram ALIGN(8) : {
+		board_eram = .;
+
+		*(.eramCode);
+
+		. = ALIGN(4);
+		*(SORT_BY_ALIGNMENT(SORT_BY_NAME(.eramData)));
+
+		. = ALIGN(4);
+		board_eram_free = .;
+	} > SRAM AT> FLASH
+	board_eram_size = @BOARD_SRAM_SIZE@;
+	__board_eram_address = LOADADDR(.flash.iram);
+	__board_eram_length = SIZEOF(.flash.iram);
 
 	.flash : {
 		__flashImageEnd = .;
@@ -126,7 +156,7 @@ SECTIONS
 	__bssStart = ADDR(.bss);
 	__bssLength = SIZEOF(.bss);
 
-	.stack : ALIGN(64) {
+	.stack ALIGN(64) : {
 		__stackStart = .;
 	} > DTCM
 
