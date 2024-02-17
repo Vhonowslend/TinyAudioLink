@@ -40,5 +40,6 @@ struct bootData_t {
 	uint32_t plugin = 0; // Some official images have a value here.
 };
 static constexpr std::size_t bootData_sz = 0xC;
+static_assert(sizeof(bootData_t) == bootData_sz, "Boot Data must be 12 bytes long.");
 
 #pragma pack(pop)

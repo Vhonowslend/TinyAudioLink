@@ -50,5 +50,6 @@ struct imageVectorTable_t {
 	uint32_t __reserved2 = 0;
 }; // 0x20
 static constexpr std::size_t imageVectorTable_sz = 0x20;
+static_assert(sizeof(imageVectorTable_t) == imageVectorTable_sz, "Image Vector Table must be 32 bytes long.");
 
 #pragma pack(pop)

@@ -251,6 +251,7 @@ struct flashLoader_t {
 	uint32_t __reserved8[11] = {0};
 };
 static constexpr std::size_t falshLoader_sz = 0x200;
+static_assert(sizeof(flashLoader_t) == falshLoader_sz, "Flash Loader must be 512 bytes long.");
 
 #pragma pack(pop)
 #endif
