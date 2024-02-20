@@ -36,9 +36,50 @@ namespace arm::cm7 {
 
 	static register_read_write<0xE000ED04> ICSR; // May be ReadOnly
 	static register_read_write<0xE000ED08> VTOR;
+
+	/** Application Interrupt and Reset Control Register
+	 * - [31...16] VECTKEY/VECTKEYSTAT. Always is 0xFA05 on read, and writes that aren't 0x05FA are ignored entirely.
+	 * - [15] Memory Endianness (Read Only, obviously).
+	 *   - 0 Little Endian
+	 *   - 1 Big Endian
+	 * - [14...11] Reserved.
+	 * - [10..8] Priority grouping. Unsure what this does.
+	 * - [7...3] Reserved.
+	 * - [2] System Request Request. Set to 1 to request a reset.
+	 * - [1] Write 1 to clear all configuration for exceptions, including ISPR. Should not be written to outside of debug mode.
+	 * - [0] Write 1 to reset the system. Again, should only be done in debug mode.
+	 */
 	static register_read_write<0xE000ED0C> AIRCR;
 
+	/** System Control Register
+	 * - [31...5] Reserved
+	 * - [4] Should interrupt transitions be considered wakeup events?
+	 * - [3] Reserved
+	 * - [2] Is the sleep mode considered deep sleep and will take longer?
+	 * - [1] Should a return from ISR to the base level enter sleep?
+	 * - [0] Reserved
+	 */
 	static register_read_write<0xE000ED10> SCR;
+
+	/** Configuration and Control Register (Bitfield)
+	 * - [31...19] Reserved
+	 * - [18] Branch Predictor Enabled?
+	 * - [17] Instruction Cache Enabled?
+	 * - [16] Data Cache Enabled?
+	 * - [15...10] Reserved
+	 * - [9] Stack Alignment
+	 *   - 0: Stack is 4-byte aligned
+	 *   - 1: Stack is 8-byte aligned (recommended by ARM)
+	 * - [8]
+	 * - [7...5] Reserved
+	 * - [4] Enable trapping divides by zero?
+	 * - [3] Enable trapping unaligned word or halfword access?
+	 * - [2] Reserved
+	 * - [1] Can unprivileged software access STIR?
+	 * - [0] Can processor enter thread mode with exceptions enabled?
+	 *   - 0 No, and it will cause another exception if you do.
+	 *   - 1 Yes, see documentation DDI0403EE_arm_v7m_ref_manual.pdf.
+	 */
 	static register_read_write<0xE000ED14> CCR;
 
 	static register_read_write<0xE000ED18> SHPR1;
@@ -75,6 +116,28 @@ namespace arm::cm7 {
 	static register_read<0xE000ED80>       CCSIDR;
 	static register_read_write<0xE000ED84> CSSELR;
 
+	/** Coprocessor access Control Register
+	 * - [31...24] Reserved
+	 * - [23...22] CP11
+	 * 	 - Combine with CP10 to enable the Floating Point Unit, if present.
+	 * - [21...20] CP10
+	 * 	 - Combine with CP11 to enable the Floating Point Unit, if present.
+	 * - [19...16] Reserved
+	 * - [15...14] CP7
+	 * - [13...12] CP6
+	 * - [11...10] CP5
+	 * - [9...8] CP4
+	 * - [7...6] CP3
+	 * - [5...4] CP2
+	 * - [3...2] CP1
+	 * - [1...0] CP0
+	 * 
+	 * Possible values
+	 * - 0b00 Disable all access, and trigger a UsageFault.
+	 * - 0b01 Access for privileged processes only. Triggers a UsageFault for non-privileged access.
+	 * - 0b10 Reserved (Probably access for non-privileged only, which makes no sense).
+	 * - 0b11 Full Access.
+	 */
 	static register_read_write<0xE000ED88> CPACR;
 
 	static register_write<0xE000EF00> STIR;

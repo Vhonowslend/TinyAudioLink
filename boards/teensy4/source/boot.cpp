@@ -20,6 +20,7 @@
 #include <cstring>
 #include "arm/cm7/cache.hpp"
 #include "arm/cm7/cm7.hpp"
+#include "arm/cm7/fpu.hpp"
 #include "board.h"
 #include "nxp/imxrt1060/bootdata.hpp"
 #include "nxp/imxrt1060/gpio.hpp"
@@ -38,6 +39,10 @@ void _start(void)
 		asm volatile("dmb;dsb;isb;");
 		arm::cm7::cache::data::enable();
 		arm::cm7::cache::instruction::enable();
+	}
+
+	{ // Enable any available Floating Point Units.
+		arm::cm7::fpu::enable(); // This is a NOP if it's not supported.
 	}
 
 	{ // Initialize ITCM
