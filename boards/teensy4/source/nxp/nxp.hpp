@@ -1,5 +1,5 @@
 // TinyAudioLink - Seamlessly transfer Audio between USB capable devices
-// Copyright (C) 2019 Michael Fabian 'Xaymar' Dirks
+// Copyright (C) 2024 Michael Fabian 'Xaymar' Dirks
 //
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -15,23 +15,14 @@
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #pragma once
-#include <cinttypes>
-#include <cstddef>
+#include <inttypes.h>
+#include <stddef.h>
 
-// This is critical, so ensure it's byte aligned.
-#pragma pack(push, 1)
-
-namespace imxrt1060::nvic {
-	typedef void (*interrupt_function_t)();
-
-	struct interrupt_vector_table_t {
-		std::size_t*         initialStackPointer;
-		interrupt_function_t reset;
-		interrupt_function_t interrupts[240] = {0};
+namespace nxp {
+	struct header_t {
+		uint8_t  tag;
+		uint16_t length;
+		uint8_t  parameter;
 	};
-	extern interrupt_vector_table_t __interrupt_vector_table;
 
-	void initialize();
-} // namespace imxrt1060::nvic
-
-#pragma pack(pop)
+} // namespace nxp

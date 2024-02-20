@@ -16,36 +16,43 @@
 
 #pragma once
 #include <cinttypes>
-#include "imxrt1060/bootdata.hpp"
+#include <endian.h>
+#include "nxp/imxrt1060/bootdata.hpp"
+#include "nxp/imxrt1060/deviceconfigurationdata.hpp"
+#include "nxp/nxp.hpp"
 
 #ifndef USE_TEENSY_IVT
-#include "imxrt1060/nvic.hpp"
+#include "nxp/imxrt1060/nvic.hpp"
 #endif
 
 // This is critical, so ensure it's byte aligned.
 #pragma pack(push, 1)
 
-namespace imxrt1060 {
+namespace nxp::imxrt1060 {
 #ifndef USE_TEENSY_IVT
 	/** Image Vector Table 4.0/4.1
 	 * - Mentioned here https://forum.pjrc.com/index.php?threads/teensy-4-imagevectortable-not-matching-the-nxp-format.67562/#post-282356
 	 * - Unclear where that user got the information from, since I could not find this documentation they are talking about.
 	 */
 	struct image_vector_table_t {
-		// 0x00 Big Endian Header: Tag, Length, Version in one field.
-		uint32_t header = 0x412000D1;
+		// 0x00 Header: Tag, Length, Version in one field.
+		nxp::header_t header = {
+			.tag       = 0xD1,
+			.length    = htobe16(sizeof(image_vector_table_t)),
+			.parameter = 0x41,
+		};
 		// 0x04 Entry: Absolute address of the first instruction?
-		::imxrt1060::nvic::interrupt_vector_table_t* ivt = &::imxrt1060::nvic::__interrupt_vector_table;
+		nxp::imxrt1060::nvic::interrupt_vector_table_t* ivt = &nxp::imxrt1060::nvic::__interrupt_vector_table;
 		// 0x08 Reserved, must be zero.
 		uint32_t __reserved1 = 0;
 		// 0x0C Device Configuration Data: Absolute address but optional, so it's NULL.
-		void* dcd = nullptr;
+		nxp::imxrt1060::device_configuration_data::data_t const* dcd = nullptr;
 		// 0x10 Boot Data: Absolute address of the boot data.
-		boot_data_t* bootData = nullptr;
+		nxp::imxrt1060::boot_data_t const* bootData = nullptr;
 		// 0x14 Image Vector Table: The address of this structure.
-		image_vector_table_t* self = nullptr;
+		nxp::imxrt1060::image_vector_table_t const* self = nullptr;
 		// 0x18 Command Sequence File: See High-Assurance Boot for details. Must be NULL if not performing HAB.
-		void* csf = nullptr;
+		void const* csf = nullptr;
 		// 0x1C Reserved, must be zero.
 		uint32_t __reserved2 = 0;
 	}; // 0x20
@@ -57,20 +64,25 @@ namespace imxrt1060 {
 	 * - IMXRT1060RM_rev1_Processor_Manual.pdf: 8.7.1
 	 */
 	struct image_vector_table_t {
-		// 0x00 Big Endian Header: Tag, Length, Version in one field.
-		uint32_t header = 0x432000D1; // Teensy 4.x ships with a different version (4.3) that jumps straight to code.
+		// 0x00 Header: Tag, Length, Version in one field.
+		nxp::header_t header = {
+			.tag    = 0xD1,
+			.length = htobe16(sizeof(image_vector_table_t)),
+			// Teensy 4.x ships with a different version (4.3) that jumps straight to code.
+			.parameter = 0x43,
+		};
 		// 0x04 Entry: Absolute address of the first instruction?
 		void (*entryPoint)() = nullptr;
 		// 0x08 Reserved, must be zero.
 		uint32_t __reserved1 = 0;
 		// 0x0C Device Configuration Data: Absolute address but optional, so it's NULL.
-		void* dcd = nullptr;
+		nxp::imxrt1060::device_configuration_data::data_t const* dcd = nullptr;
 		// 0x10 Boot Data: Absolute address of the boot data.
-		boot_data_t* bootData = nullptr;
+		nxp::imxrt1060::boot_data_t const* bootData = nullptr;
 		// 0x14 Image Vector Table: The address of this structure.
-		image_vector_table_t* self = nullptr;
+		nxp::imxrt1060::image_vector_table_t const* self = nullptr;
 		// 0x18 Command Sequence File: See High-Assurance Boot for details. Must be NULL if not performing HAB.
-		void* csf = nullptr;
+		void const* csf = nullptr;
 		// 0x1C Reserved, must be zero.
 		uint32_t __reserved2 = 0;
 	}; // 0x20
@@ -79,6 +91,6 @@ namespace imxrt1060 {
 #endif
 
 	extern image_vector_table_t __image_vector_table;
-} // namespace imxrt1060
+} // namespace nxp::imxrt1060
 
 #pragma pack(pop)

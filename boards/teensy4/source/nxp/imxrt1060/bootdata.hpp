@@ -27,7 +27,7 @@ extern std::size_t __flash_start;
 // Length of the entire flash image.
 extern std::size_t __flash_length;
 
-namespace imxrt1060 {
+namespace nxp::imxrt1060 {
 	/** Boot Data
 	 * - IMXRT1060RM_rev1_Processor_Manual.pdf: 8.7.1.2
 	 */
@@ -43,6 +43,6 @@ namespace imxrt1060 {
 	static_assert(sizeof(boot_data_t) == boot_data_sz, "Boot Data must be 12 bytes long.");
 
 	extern boot_data_t __boot_data;
-} // namespace imxrt1060
+} // namespace nxp::imxrt1060
 
 #pragma pack(pop)

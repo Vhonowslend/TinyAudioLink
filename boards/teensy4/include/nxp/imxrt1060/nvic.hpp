@@ -15,5 +15,23 @@
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #pragma once
+#include <cinttypes>
+#include <cstddef>
 
-extern "C" void _start() noexcept;
+// This is critical, so ensure it's byte aligned.
+#pragma pack(push, 1)
+
+namespace nxp::imxrt1060::nvic {
+	typedef void (*interrupt_function_t)();
+
+	struct interrupt_vector_table_t {
+		std::size_t*         initialStackPointer;
+		interrupt_function_t reset;
+		interrupt_function_t interrupts[240] = {0};
+	};
+	extern interrupt_vector_table_t __interrupt_vector_table;
+
+	void initialize();
+} // namespace nxp::imxrt1060::nvic
+
+#pragma pack(pop)

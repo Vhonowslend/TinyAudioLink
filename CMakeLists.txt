@@ -16,7 +16,9 @@
 
 cmake_minimum_required(VERSION 3.26)
 list(APPEND CMAKE_MESSAGE_INDENT "[TinyAudioLink] ")
-project(TinyAudioLink)
+project(TinyAudioLink
+	LANGUAGES C CXX ASM
+)
 
 ################################################################################
 # Modules

@@ -61,7 +61,8 @@
 			"vector": "cpp",
 			"algorithm": "cpp",
 			"cstring_memcpy": "cpp",
-			"*.impl": "cpp"
+			"*.impl": "cpp",
+			"__memory": "cpp"
 		}
 	}
 }
