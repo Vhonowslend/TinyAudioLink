@@ -52,14 +52,20 @@ SECTIONS
 		 * - SD/MMC/...: 0x400 (1KB, loads 4KB only)
 		 * - FlexSPI NAND: 0x400 (1KB, loads 4KB only)
 		 */
-		. = ORIGIN(FLASH) + 4K;	/* . = ALIGN(4K); */
+		FILL(0xFFFFFFFF) : . = ORIGIN(FLASH) + 4K;	/* . = ALIGN(4K); */
 		KEEP(*(.imageVectorTable))
 
 		/* Boot Data
 		 * - Just 12 bytes long, so it fits here.
 		 */
-		. = ALIGN(4);
+		FILL(0xFFFFFFFF) : . = ALIGN(16);
 		KEEP(*(.bootData))
+
+		/* Device Configuration Data
+		 * - Mostly just used to do pre-boot initialization for jumping into code itself.
+		 */
+		FILL(0xFFFFFFFF) : . = ALIGN(16);
+		KEEP(*(.dcd))
 
 		/* Interrupt Vector Table
 		 * - Must be 128 byte aligned.
@@ -69,21 +75,26 @@ SECTIONS
 		 *   - Just move it to be after imageVectorTable and bootData, filling out the remaining 4K that are loaded anyway.
 		 * - Not documented at all? Is relatively easy to figure out anyway.
 		 */
-		. = ALIGN(128);
+		FILL(0xFFFFFFFF) : . = ALIGN(128);
 		KEEP(*(.interruptVectorTable))
+
+		FILL(0xFFFFFFFF);
 	} > FLASH
 
 	.flash.code ALIGN(4K) : {
 		KEEP(*(.text._start))		
 		*(.flashCode)
+		FILL(0xFFFFFFFF);
 	} > FLASH
 
 	.flash.data ALIGN(4K) : {
 		*(SORT_BY_ALIGNMENT(SORT_BY_NAME(.flashData)))
+
+		FILL(0xFFFFFFFF);
 	} > FLASH
 
-	.flash.fastCode ALIGN(8) : {
-		. = . + 32; /* Use Memory Protection Unit to trap a null pointer dereference. */
+	.flash.fastCode ALIGN(4K) : {
+		FILL(0x00) : . = . + 32; /* Use Memory Protection Unit to trap a null pointer dereference. */
 
 		KEEP(*(.init))
 		KEEP(*(.fini))
@@ -109,15 +120,17 @@ SECTIONS
 	__fast_code_length = SIZEOF(.flash.fastCode);
 	__fast_code_address = LOADADDR(.flash.fastCode);
 
-	.flash.fastData ALIGN(4) : {
+	.flash.fastData ALIGN(4K) : {
 		*(SORT_BY_ALIGNMENT(SORT_BY_NAME(.rodata.*)))
 		__dtcm_rodata = .;
 		*(SORT_BY_ALIGNMENT(SORT_BY_NAME(.data.*)))
+
+		FILL(0xFFFFFFFF);
 	} > DTCM AT> FLASH
 	__fast_data_length = SIZEOF(.flash.fastData);
 	__fast_data_address = LOADADDR(.flash.fastData);
 
-	.flash.iramCode ALIGN(8) : {
+	.flash.iramCode ALIGN(4K) : {
 		__board_iram = .;
 		*(.iramCode);
 	} > SRAM AT> FLASH
@@ -127,22 +140,26 @@ SECTIONS
 
 		. = ALIGN(4);
 		__board_iram_free = .;
+
+		FILL(0xFFFFFFFF);
 	} > SRAM AT> FLASH
 	__board_iram_size = @BOARD_SRAM_SIZE@;
 	__board_iram_address = LOADADDR(.flash.iramCode);
 	__board_iram_length = __board_iram_free - __board_iram;
 
-	.flash.eramCode ALIGN(8) : {
+	.flash.eramCode ALIGN(4K) : {
 		__board_eram = .;
 		*(.eramCode);
-	} > SRAM AT> FLASH
+	} > ERAM AT> FLASH
 
 	.flash.eramData ALIGN(4) : {
 		*(SORT_BY_ALIGNMENT(SORT_BY_NAME(.eramData)));
 
 		. = ALIGN(4);
 		__board_eram_free = .;
-	} > SRAM AT> FLASH
+
+		FILL(0xFFFFFFFF);
+	} > ERAM AT> FLASH
 	__board_eram_size = @BOARD_SRAM_SIZE@;
 	__board_eram_address = LOADADDR(.flash.eramCode);
 	__board_eram_length = __board_eram_free - __board_eram;
