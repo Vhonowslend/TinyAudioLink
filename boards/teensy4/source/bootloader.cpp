@@ -132,7 +132,14 @@ void _start(void) noexcept
 {
 	// Set up FlexRAM properly.
 	asm volatile("str %[val], %[gpr]" : [gpr] "=m"(imxrt1060::iomuxc::gpr::GPR17.ref) : [val] "r"(&__flexram_bank_config) : "memory");
-	asm volatile("str %[val], %[gpr]" : [gpr] "=m"(imxrt1060::iomuxc::gpr::GPR16.ref) : [val] "r"(0x00200007) : "memory");
+	asm volatile(R"(
+		ldr r0, %[gpr]
+		orr %[val], r0
+		str %[val], %[gpr]
+	)"
+				 : [gpr] "=m"(imxrt1060::iomuxc::gpr::GPR16.ref)
+				 : [val] "r"(0x00000007)
+				 : "r0", "memory");
 
 	// FlexRAM may take a bit to "warm up", so we purposefully wait 1 cycle per bank here.
 	asm volatile(R"(
