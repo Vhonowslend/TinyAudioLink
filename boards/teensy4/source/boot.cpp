@@ -18,7 +18,8 @@
 #include <cinttypes>
 #include <cstddef>
 #include <cstring>
-#include "arm/cm7.hpp"
+#include "arm/cm7/cache.hpp"
+#include "arm/cm7/cm7.hpp"
 #include "board.h"
 #include "nxp/imxrt1060/bootdata.hpp"
 #include "nxp/imxrt1060/gpio.hpp"
@@ -30,9 +31,15 @@
 // Main Application
 extern "C" int main();
 
-extern "C" SECTION_CODE_BOOT [[gnu::used, gnu::visibility("default"), gnu::noinline, gnu::noreturn]]
+extern "C" SECTION_CODE_BOOT [[gnu::used, gnu::noreturn]]
 void _start(void)
 {
+	{ // Enable all caches.
+		asm volatile("dmb;dsb;isb;");
+		arm::cm7::cache::data::enable();
+		arm::cm7::cache::instruction::enable();
+	}
+
 	{ // Initialize ITCM
 		extern std::size_t __fast_code_length; // Flash Fast Code End
 		extern std::size_t __fast_code_address; // Flash Fast Code Address
@@ -62,14 +69,14 @@ void _start(void)
 	}
 
 	// Initialize Internal Memory
-	if (BOARD_IRAM_SIZE > 0 && false) {
+	if (BOARD_IRAM_SIZE > 0) {
 		extern std::size_t __board_iram_address;
 		extern std::size_t __board_iram_length;
 		boot_memcpy(BOARD_IRAM, &__board_iram_address, reinterpret_cast<std::size_t>(&__board_iram_length));
 	}
 
 	// Initialize External Memory
-	if (BOARD_ERAM_SIZE > 0 && false) {
+	if (BOARD_ERAM_SIZE > 0) {
 		extern std::size_t __board_eram_address;
 		extern std::size_t __board_eram_length;
 		boot_memcpy(BOARD_ERAM, &__board_eram_address, reinterpret_cast<std::size_t>(&__board_eram_length));
