@@ -24,13 +24,104 @@
 
 namespace arm::cm7 {
 	static registerReadWrite<0xE000E008> ACTLR;
+
+	static registerUndefined<0xE000E00C> __reserved0;
+
 	static registerReadWrite<0xE000E010> SYST_CSR;
 	static registerReadWrite<0xE000E014> SYST_RVR;
 	static registerReadWrite<0xE000E018> SYST_CVR;
 	static registerReadOnly<0xE000E01C>  SYST_CALIB;
-	static registerReadWrite<0xE000ED00> CPUID;
-	static registerReadWrite<0xE000ED04> ICSR;
-	static registerReadWrite<0xE000ED08> VTOR;
+
+	static registerReadOnly<0xE000ED00> CPUID;
+
+	static registerReadWrite<0xE000ED04> ICSR; // May be ReadOnly
+	static registerReadWrite<0xE000ED08> VTOR;	
+	static registerReadWrite<0xE000ED0C> AIRCR;
+
+	static registerReadWrite<0xE000ED10> SCR;
+	static registerReadWrite<0xE000ED14> CCR;
+
+	static registerReadWrite<0xE000ED18> SHPR1;
+	static registerReadWrite<0xE000ED1C> SHPR2;
+	static registerReadWrite<0xE000ED20> SHPR3;
+	static registerReadWrite<0xE000ED24> SHCSR;
+
+	static registerReadWrite<0xE000ED28> CFSR;
+	static registerReadWrite<0xE000ED2C> HFSR;
+	static registerReadWrite<0xE000ED30> DFSR;
+	static registerReadWrite<0xE000ED34> MMFAR;
+	static registerReadWrite<0xE000ED38> BFAR;
+
+	static registerReadOnly<0xE000ED40> ID_PFR0;
+	static registerReadOnly<0xE000ED44> ID_PFR1;
+
+	static registerReadOnly<0xE000ED48> ID_DFR0;
+
+	static registerReadOnly<0xE000ED4C> ID_AFR0;
+
+	static registerReadOnly<0xE000ED50> ID_MMFR0;
+	static registerReadOnly<0xE000ED54> ID_MMFR1;
+	static registerReadOnly<0xE000ED58> ID_MMFR2;
+	static registerReadOnly<0xE000ED5C> ID_MMFR3;
+
+	static registerReadOnly<0xE000ED60> ID_ISAR0;
+	static registerReadOnly<0xE000ED64> ID_ISAR1;
+	static registerReadOnly<0xE000ED68> ID_ISAR2;
+	static registerReadOnly<0xE000ED6C> ID_ISAR3;
+	static registerReadOnly<0xE000ED70> ID_ISAR4;
+
+	static registerReadOnly<0xE000ED78> CLIDR;
+	static registerReadOnly<0xE000ED7C> CTR;
+	static registerReadOnly<0xE000ED80> CCSIDR;
+	static registerReadWrite<0xE000ED84> CSSELR;
+
+	static registerReadWrite<0xE000ED88> CPACR;
+
+	static registerWriteOnly<0xE000EF00> STIR;
+
+	static registerWriteOnly<0xE000EF50> ICIALLU;
+	static registerUndefined<0xE000EF54> __reserved1;
+	static registerWriteOnly<0xE000EF58> ICIMVAU;
+
+	static registerWriteOnly<0xE000EF5C> DCIMVAC;
+	static registerWriteOnly<0xE000EF60> DCISW;
+	static registerWriteOnly<0xE000EF64> DCCMVAU;
+	static registerWriteOnly<0xE000EF68> DCCMVAC;
+	static registerWriteOnly<0xE000EF6C> DCCSW;
+	static registerWriteOnly<0xE000EF70> DCCIMVAC;
+	static registerWriteOnly<0xE000EF74> DCCISW;
+
+	static registerWriteOnly<0xE000EF78> BPIALL; // "Not implemented"	
+	static registerUndefined<0xE000EF7C> __reserved2;	
+	static registerUndefined<0xE000EF80> __reserved3;
+
+	static registerReadWrite<0xE000EF90> ITCMCR;
+	static registerReadWrite<0xE000EF94> DTCMCR;
+	static registerReadWrite<0xE000EF98> AHBPCR;
+	static registerReadWrite<0xE000EF9C> CACR;
+	static registerReadWrite<0xE000EFA0> AHBSCR;
+	static registerUndefined<0xE000EFA4> __reserved4;
+	static registerReadWrite<0xE000EFA8> ABFSR;
+
+	static registerReadWrite<0xE000EFB0> IEBR0;
+	static registerReadWrite<0xE000EFB4> IEBR1;
+
+	static registerReadWrite<0xE000EFB8> DEBR0;
+	static registerReadWrite<0xE000EFBC> DEBR1;
+
+	static registerUndefined<0xE000EFD0> PID4;
+	static registerUndefined<0xE000EFD4> PID5;
+	static registerUndefined<0xE000EFD8> PID6;
+	static registerUndefined<0xE000EFDC> PID7;
+	static registerUndefined<0xE000EFE0> PID0;
+	static registerUndefined<0xE000EFE4> PID1;
+	static registerUndefined<0xE000EFE8> PID2;
+	static registerUndefined<0xE000EFEC> PID3;
+
+	static registerUndefined<0xE000EFF0> CID0;
+	static registerUndefined<0xE000EFF4> CID1;
+	static registerUndefined<0xE000EFF8> CID2;
+	static registerUndefined<0xE000EFFC> CID3;
 } // namespace arm::cm7
 
 #pragma pack(pop)
