@@ -25,7 +25,7 @@ extern std::size_t __stack_start;
 
 [[gnu::used, gnu::section(".interruptVectorTable")]] nxp::imxrt1060::nvic::interrupt_vector_table_t nxp::imxrt1060::nvic::__interrupt_vector_table = {
 	.initialStackPointer = &__stack_start,
-	.reset               = &_start,
+	.reset               = &_reset,
 };
 
 void nxp::imxrt1060::nvic::initialize()

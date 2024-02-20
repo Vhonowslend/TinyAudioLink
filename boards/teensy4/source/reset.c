@@ -17,14 +17,14 @@
 #include <inttypes.h>
 #include <stddef.h>
 #include "board.h"
+#include "boot.h"
 #include "nxp/imxrt1060/imxrt1060.h"
 
-extern void   _start_internal();
 extern size_t __flexram_bank_config; // FlexRAM Bank Configuration
 extern size_t __stack_start; // Stack Address
 
 [[gnu::used, gnu::naked, gnu::noreturn]]
-SECTION_CODE_BOOT void _start(void)
+SECTION_CODE_BOOT void _reset(void)
 {
 	// Set up FlexRAM properly.
 	asm volatile("str %[val], %[gpr]" : [gpr] "=g"(__IMXRT1060_IOMUXC_GPR17) : [val] "r"(&__flexram_bank_config) : "memory");
@@ -49,5 +49,5 @@ SECTION_CODE_BOOT void _start(void)
 	// Once it's been set up, we can Branch to the actual start function which can do more complication things.
 	// It is important to use the 'B' instruction here instead of the 'BX', 'BL' or similar instructions,
 	// as 'B' simply jumps instead of branching.
-	asm volatile("b %P0" : : "i"(&_start_internal));
+	asm volatile("b %P0" : : "i"(&_start));
 }

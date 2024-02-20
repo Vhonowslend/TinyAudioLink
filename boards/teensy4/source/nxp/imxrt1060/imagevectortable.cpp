@@ -68,7 +68,7 @@ struct teensy_dcd {
 
 [[gnu::used, gnu::section(".imageVectorTable")]] nxp::imxrt1060::image_vector_table_t nxp::imxrt1060::__image_vector_table = {
 #ifdef USE_TEENSY_IVT
-	.entryPoint = &_start,
+	.entryPoint = &_reset,
 #endif
 	.dcd      = reinterpret_cast<decltype(nxp::imxrt1060::image_vector_table_t::dcd)>(&teensyDCD),
 	.bootData = &__boot_data,

@@ -14,6 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+#include "boot.h"
 #include <cinttypes>
 #include <cstddef>
 #include <cstring>
@@ -30,7 +31,7 @@
 extern "C" int main();
 
 extern "C" SECTION_CODE_BOOT [[gnu::used, gnu::visibility("default"), gnu::noinline, gnu::noreturn]]
-void _start_internal(void)
+void _start(void)
 {
 	{ // Initialize ITCM
 		extern std::size_t __fast_code_length; // Flash Fast Code End
