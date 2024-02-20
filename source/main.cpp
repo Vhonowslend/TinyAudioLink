@@ -18,19 +18,74 @@
 #include <cstddef>
 #include "imxrt1060/gpio.hpp"
 
-static std::size_t shouldBeInBSS = 0b1000;
-
 extern "C" [[gnu::used]]
 int main()
 {
+	uint8_t idx = 0;
+	size_t  stackpointer;
+	asm volatile(R"(
+		mov %[out], sp
+	)"
+				 : [out] "=r"(stackpointer)::);
+
 	imxrt1060::gpio::GPIO2.direction = 0xFFFFFFFF;
 	imxrt1060::gpio::GPIO2.data      = 0xFFFFFFFF;
-	while (true) {
-		imxrt1060::gpio::GPIO2.dataToggle = shouldBeInBSS;
+	for (volatile std::size_t i = 0; i < 0x11E1A3 * 3; i = i + 1) {
+		asm volatile(R"(
+nop; nop; nop; nop; nop; nop; nop; nop; nop; nop; nop; nop; nop; nop; nop; nop; nop; nop; nop; nop;
+nop; nop; nop; nop; nop; nop; nop; nop; nop; nop; nop; nop; nop; nop; nop; nop; nop; nop; nop; nop;
+nop; nop; nop; nop; nop; nop; nop; nop; nop; nop; nop; nop; nop; nop; nop; nop; nop; nop; nop; nop;
+nop; nop; nop; nop; nop; nop; nop; nop; nop; nop; nop; nop; nop; nop; nop; nop; nop; nop; nop; nop;
+nop; nop; nop; nop; nop; nop; nop; nop; nop; nop; nop; nop; nop; nop; nop; nop; nop; nop; nop; nop;
+nop; nop; nop; nop; nop; nop; nop; nop; nop; nop; nop; nop; nop; nop; nop; nop; nop; nop; nop; nop;
+nop; nop; nop; nop; nop; nop; nop; nop; nop; nop; nop; nop; nop; nop; nop; nop; nop; nop; nop; nop;
+		)");
+	}
 
-		const char* why = "";
+	imxrt1060::gpio::GPIO2.dataToggle = 0b1000;
+	for (volatile std::size_t i = 0; i < 0x11E1A3 * 3; i = i + 1) {
+		asm volatile(R"(
+nop; nop; nop; nop; nop; nop; nop; nop; nop; nop; nop; nop; nop; nop; nop; nop; nop; nop; nop; nop;
+nop; nop; nop; nop; nop; nop; nop; nop; nop; nop; nop; nop; nop; nop; nop; nop; nop; nop; nop; nop;
+nop; nop; nop; nop; nop; nop; nop; nop; nop; nop; nop; nop; nop; nop; nop; nop; nop; nop; nop; nop;
+nop; nop; nop; nop; nop; nop; nop; nop; nop; nop; nop; nop; nop; nop; nop; nop; nop; nop; nop; nop;
+nop; nop; nop; nop; nop; nop; nop; nop; nop; nop; nop; nop; nop; nop; nop; nop; nop; nop; nop; nop;
+nop; nop; nop; nop; nop; nop; nop; nop; nop; nop; nop; nop; nop; nop; nop; nop; nop; nop; nop; nop;
+nop; nop; nop; nop; nop; nop; nop; nop; nop; nop; nop; nop; nop; nop; nop; nop; nop; nop; nop; nop;
+		)");
+	}
+
+	imxrt1060::gpio::GPIO2.dataToggle = 0b1000;
+	for (volatile std::size_t i = 0; i < 0x11E1A3 * 3; i = i + 1) {
+		asm volatile(R"(
+nop; nop; nop; nop; nop; nop; nop; nop; nop; nop; nop; nop; nop; nop; nop; nop; nop; nop; nop; nop;
+nop; nop; nop; nop; nop; nop; nop; nop; nop; nop; nop; nop; nop; nop; nop; nop; nop; nop; nop; nop;
+nop; nop; nop; nop; nop; nop; nop; nop; nop; nop; nop; nop; nop; nop; nop; nop; nop; nop; nop; nop;
+nop; nop; nop; nop; nop; nop; nop; nop; nop; nop; nop; nop; nop; nop; nop; nop; nop; nop; nop; nop;
+nop; nop; nop; nop; nop; nop; nop; nop; nop; nop; nop; nop; nop; nop; nop; nop; nop; nop; nop; nop;
+nop; nop; nop; nop; nop; nop; nop; nop; nop; nop; nop; nop; nop; nop; nop; nop; nop; nop; nop; nop;
+nop; nop; nop; nop; nop; nop; nop; nop; nop; nop; nop; nop; nop; nop; nop; nop; nop; nop; nop; nop;
+		)");
+	}
+
+	while (true) {
+		imxrt1060::gpio::GPIO2.dataToggle = 0b1000;
+
+		idx      = (idx + 1) % (sizeof(size_t) * 8);
+		bool set = (stackpointer & (1 << idx)) >> idx;
+
+		imxrt1060::gpio::GPIO2.dataToggle = set ? 0b1000 : 0;
+
 		for (volatile std::size_t i = 0; i < 0x11E1A3 * 3; i = i + 1) {
-			why = "Hello World";
+			asm volatile(R"(
+nop; nop; nop; nop; nop; nop; nop; nop; nop; nop; nop; nop; nop; nop; nop; nop; nop; nop; nop; nop;
+nop; nop; nop; nop; nop; nop; nop; nop; nop; nop; nop; nop; nop; nop; nop; nop; nop; nop; nop; nop;
+nop; nop; nop; nop; nop; nop; nop; nop; nop; nop; nop; nop; nop; nop; nop; nop; nop; nop; nop; nop;
+nop; nop; nop; nop; nop; nop; nop; nop; nop; nop; nop; nop; nop; nop; nop; nop; nop; nop; nop; nop;
+nop; nop; nop; nop; nop; nop; nop; nop; nop; nop; nop; nop; nop; nop; nop; nop; nop; nop; nop; nop;
+nop; nop; nop; nop; nop; nop; nop; nop; nop; nop; nop; nop; nop; nop; nop; nop; nop; nop; nop; nop;
+nop; nop; nop; nop; nop; nop; nop; nop; nop; nop; nop; nop; nop; nop; nop; nop; nop; nop; nop; nop;
+			)");
 		}
 	}
 	return 0;
