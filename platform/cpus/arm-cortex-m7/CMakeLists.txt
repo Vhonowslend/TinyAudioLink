@@ -21,32 +21,26 @@ target_include_directories(${PROJECT_NAME}
 	PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/source"
 	PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/include"
 )
-target_link_libraries(${PROJECT_NAME}
-	PUBLIC
-		"m" # C Math
-		"c++" # C++ Stuff
-)
 target_compile_options(${PROJECT_NAME}
 	PUBLIC
 		# ARMv7 Thumb, with Hard Float v5/d16
 		"--target=thumbv7em-none-unknown-eabihf"
 		"-mfpu=fpv5-d16"
-#		"-mthumb"
-#		"-mcpu=cortex-m7"
-#		"-m32"
-#		"-mfloat-abi=hard"
-		"-funsigned-char"
-		"-fpack-struct=1"
-		"-fmax-type-align=4"
-#		"-fshort-enums"
-#		"-fshort-wchar"
-		"-frwpi"
-		"-felide-constructors"
-		# Run-Time Type Information
-		"-frtti"
-#		"-frtti-data"
 		# Read/Write Position Independent Code
-		"-frwpi"
+		"-frwpi"		
+		# C++: Prefer Copy without temporary objects
+		"$<$<COMPILE_LANGUAGE:CXX>:-felide-constructors>"
+		# C++: Run-Time Type Information
+		"$<$<COMPILE_LANGUAGE:CXX>:-frtti>"
+		# Don't bother with frame pointers
+		"$<$<COMPILE_LANGUAGE:CXX>:-fomit-frame-pointer>"
+		# Default to hiding everything. Sometimes results in smaller binaries
+		"$<$<COMPILE_LANGUAGE:CXX>:-fvisibility=hidden>"
+)
+target_link_options(${PROJECT_NAME}
+	PUBLIC
+		# Default to hiding everything. Sometimes results in smaller binaries
+		"-fvisibility=hidden"
 )
 
 # Always do this last, it's order dependent unfortunately.

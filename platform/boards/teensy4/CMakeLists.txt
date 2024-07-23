@@ -90,36 +90,14 @@ target_compile_definitions(${PROJECT_NAME}
 	PRIVATE
 		TEENSY_FLASH_SIZE=${BOARD_FLASH_SIZE_FULL}
 )
+#target_compile_options(${PROJECT_NAME}
+#	PRIVATE
+#		"-fno-rtti"
+#		"-fno-exceptions"
+#		"-nostdlib"
+#)
 
 # Always do this last, it's order dependent unfortunately.
 generate_compile_commands_json(TARGETS ${PROJECT_NAME})
 clang_tidy(TARGETS ${PROJECT_NAME} VERSION 15.0.0)
 clang_format(TARGETS ${PROJECT_NAME} VERSION 15.0.0 DEPENDENCY GLOBAL)
-
-if(BOARD_NAME STREQUAL "Teensy4")
-	function(postprocess TARGET)
-		# Post-processing so it can actually be run.
-		set_property(
-			TARGET ${TARGET}
-			APPEND PROPERTY ADDITIONAL_CLEAN_FILES "$<TARGET_FILE_DIR:${TARGET}>/$<TARGET_FILE_BASE_NAME:${TARGET}>.hex"
-		)
-		add_custom_command(
-			TARGET ${TARGET}
-			POST_BUILD
-			COMMAND "${CMAKE_OBJCOPY}"
-			ARGS -O ihex "$<TARGET_FILE:${TARGET}>" "$<TARGET_FILE_DIR:${TARGET}>/$<TARGET_FILE_BASE_NAME:${TARGET}>.hex"
-		)
-
-		# Post-Processing for debugging Assembly.
-		set_property(
-			TARGET ${TARGET}
-			APPEND PROPERTY ADDITIONAL_CLEAN_FILES "$<TARGET_FILE_DIR:${TARGET}>/$<TARGET_FILE_BASE_NAME:${TARGET}>.asm"
-		)
-		add_custom_command(
-			TARGET ${TARGET}
-			POST_BUILD
-			COMMAND "${CMAKE_OBJDUMP}"
-			ARGS --disassemble-all --line-numbers --source --demangle --symbolize-operands "$<TARGET_FILE:${TARGET}>" > "$<TARGET_FILE_DIR:${TARGET}>/$<TARGET_FILE_BASE_NAME:${TARGET}>.asm"
-		)
-	endfunction()
-endif()

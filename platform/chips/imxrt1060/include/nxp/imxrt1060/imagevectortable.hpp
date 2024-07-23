@@ -25,16 +25,13 @@
 #include "nxp/imxrt1060/nvic.hpp"
 #endif
 
-// This is critical, so ensure it's byte aligned.
-#pragma pack(push, 1)
-
 namespace nxp::imxrt1060 {
 #ifndef USE_TEENSY_IVT
 	/** Image Vector Table 4.0/4.1
 	 * - Mentioned here https://forum.pjrc.com/index.php?threads/teensy-4-imagevectortable-not-matching-the-nxp-format.67562/#post-282356
 	 * - Unclear where that user got the information from, since I could not find this documentation they are talking about.
 	 */
-	struct image_vector_table_t {
+	struct [[gnu::packed, gnu::aligned(1)]] image_vector_table_t {
 		// 0x00 Header: Tag, Length, Version in one field.
 		nxp::header_t header = {
 			.tag       = 0xD1,
@@ -63,7 +60,7 @@ namespace nxp::imxrt1060 {
 	 * - IMXRT1060RM_rev3.pdf: Chapter 9, Program image, Image and Vector Table and Boot Data
 	 * - IMXRT1060RM_rev1_Processor_Manual.pdf: 8.7.1
 	 */
-	struct image_vector_table_t {
+	struct [[gnu::packed, gnu::aligned(1)]] image_vector_table_t {
 		// 0x00 Header: Tag, Length, Version in one field.
 		nxp::header_t header = {
 			.tag    = 0xD1,
@@ -90,7 +87,5 @@ namespace nxp::imxrt1060 {
 	static_assert(sizeof(image_vector_table_t) == image_vector_table_sz, "Image Vector Table must be 32 bytes long.");
 #endif
 
-	extern image_vector_table_t __image_vector_table;
+	extern const image_vector_table_t __image_vector_table;
 } // namespace nxp::imxrt1060
-
-#pragma pack(pop)

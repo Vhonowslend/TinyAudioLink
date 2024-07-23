@@ -29,9 +29,15 @@ target_link_libraries(${PROJECT_NAME}
 )
 target_compile_options(${PROJECT_NAME}
 	PUBLIC
-		# IMXRT1060 is a Single Core, but we do have several "coprocessors".
-		"-fno-threadsafe-statics"
+		# C++: Omit thread safety guarantees, as IMXRT1060 is entirely single core.
+		"$<$<COMPILE_LANGUAGE:CXX>:-fno-threadsafe-statics>"
 )
+#target_compile_options(${PROJECT_NAME}
+#	PRIVATE
+#		"-fno-rtti"
+#		"-fno-exceptions"
+#		"-nostdlib"
+#)
 
 # Always do this last, it's order dependent unfortunately.
 generate_compile_commands_json(TARGETS ${PROJECT_NAME})

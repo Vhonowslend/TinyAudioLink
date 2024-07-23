@@ -19,9 +19,6 @@
 #include <cstddef>
 #include "register.hpp"
 
-// This is critical, so ensure it's byte aligned.
-#pragma pack(push, 1)
-
 namespace nxp::imxrt1060::gpio {
 	enum class direction : bool {
 		Input  = false,
@@ -80,5 +77,3 @@ namespace nxp::imxrt1060::gpio {
 	static gpio_block<0x42008000> GPIO8;
 	static gpio_block<0x4200C000> GPIO9;
 } // namespace nxp::imxrt1060::gpio
-
-#pragma pack(pop)

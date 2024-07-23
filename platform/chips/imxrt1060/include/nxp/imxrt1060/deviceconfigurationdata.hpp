@@ -20,9 +20,6 @@
 #include <endian.h>
 #include "nxp/nxp.hpp"
 
-// This is critical, so ensure it's byte aligned.
-#pragma pack(push, 1)
-
 namespace nxp::imxrt1060::device_configuration_data {
 	enum class width : uint8_t {
 		BYTE  = 1,
@@ -30,7 +27,7 @@ namespace nxp::imxrt1060::device_configuration_data {
 		LONG  = 4,
 	};
 
-	struct command_header_t {
+	struct [[gnu::packed, gnu::aligned(1)]] command_header_t {
 		uint8_t  tag;
 		uint16_t length;
 		union {
@@ -45,7 +42,7 @@ namespace nxp::imxrt1060::device_configuration_data {
 	};
 
 	namespace write {
-		struct command_t {
+		struct [[gnu::packed, gnu::aligned(1)]] command_t {
 			command_header_t header{
 				.tag       = 0xCC,
 				.length    = htobe16(sizeof(command_t)),
@@ -60,7 +57,7 @@ namespace nxp::imxrt1060::device_configuration_data {
 	} // namespace write
 
 	namespace check {
-		struct command_t {
+		struct [[gnu::packed, gnu::aligned(1)]] command_t {
 			command_header_t header{
 				.tag       = 0xCF,
 				.length    = htobe16(sizeof(command_t)),
@@ -85,7 +82,7 @@ namespace nxp::imxrt1060::device_configuration_data {
 	} // namespace check
 
 	namespace nop {
-		struct command_t {
+		struct [[gnu::packed, gnu::aligned(1)]] command_t {
 			command_header_t header{
 				.tag       = 0xC0,
 				.length    = htobe16(sizeof(command_t)),
@@ -94,7 +91,7 @@ namespace nxp::imxrt1060::device_configuration_data {
 		};
 	} // namespace nop
 
-	struct data_t {
+	struct [[gnu::packed, gnu::aligned(1)]] data_t {
 		header_t header{
 			.tag       = 0xD2,
 			.length    = htobe16(sizeof(data_t)), // Adjust later.
@@ -103,5 +100,3 @@ namespace nxp::imxrt1060::device_configuration_data {
 		// Add commands after here.
 	};
 } // namespace nxp::imxrt1060::device_configuration_data
-
-#pragma pack(pop)

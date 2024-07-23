@@ -19,24 +19,22 @@
 
 extern std::size_t __flexram_bank_config; // FlexRAM Bank Configuration
 
-namespace dcd = nxp::imxrt1060::device_configuration_data;
-
-struct teensy_dcd {
+struct [[gnu::packed, gnu::aligned(1)]] dcd {
 	// 0x00
-	dcd::data_t header = {
+	nxp::imxrt1060::device_configuration_data::data_t header = {
 		.header{
 			.tag       = 0xD2,
-			.length    = htobe16(sizeof(teensy_dcd)),
+			.length    = htobe16(sizeof(dcd)),
 			.parameter = 0x41,
 		},
 	};
 
 	/** Configure FlexRAM banks as preferred.
 	 */
-	dcd::write::command_t write_flexram_configuration = {
+	nxp::imxrt1060::device_configuration_data::write::command_t write_flexram_configuration = {
 		.header{
 			.parameter{
-				.width = dcd::width::LONG,
+				.width = nxp::imxrt1060::device_configuration_data::width::LONG,
 			},
 		},
 		.address = (std::intptr_t*)&__IMXRT1060_IOMUXC_GPR17,
@@ -48,10 +46,10 @@ struct teensy_dcd {
 	/** 0x10 Enable reading FlexRAM configuration from GPR17
 	 * 
 	 */
-	dcd::write::command_t enable_flexram_configuration = {
+	nxp::imxrt1060::device_configuration_data::write::command_t enable_flexram_configuration = {
 		.header{
 			.parameter{
-				.width = dcd::width::LONG,
+				.width = nxp::imxrt1060::device_configuration_data::width::LONG,
 				.set   = true,
 				.mask  = true,
 			},
@@ -62,14 +60,13 @@ struct teensy_dcd {
 		},
 	};
 };
+[[gnu::used, gnu::section(".dcd")]] constexpr dcd __dcd;
 
-[[gnu::used, gnu::section(".dcd")]] constexpr teensy_dcd teensyDCD;
-
-[[gnu::used, gnu::section(".imageVectorTable")]] nxp::imxrt1060::image_vector_table_t nxp::imxrt1060::__image_vector_table = {
+[[gnu::used, gnu::section(".imageVectorTable")]] const nxp::imxrt1060::image_vector_table_t nxp::imxrt1060::__image_vector_table = {
 #ifdef USE_TEENSY_IVT
 	.entryPoint = &_reset,
 #endif
-	.dcd      = reinterpret_cast<decltype(nxp::imxrt1060::image_vector_table_t::dcd)>(&teensyDCD),
+	.dcd      = reinterpret_cast<decltype(nxp::imxrt1060::image_vector_table_t::dcd)>(&__dcd),
 	.bootData = &__boot_data,
 	.self     = &__image_vector_table,
 };

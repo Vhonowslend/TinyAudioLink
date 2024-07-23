@@ -19,7 +19,7 @@
 #include <stddef.h>
 
 namespace nxp {
-	struct header_t {
+	struct [[gnu::packed, gnu::aligned(1)]] header_t {
 		uint8_t  tag;
 		uint16_t length;
 		uint8_t  parameter;

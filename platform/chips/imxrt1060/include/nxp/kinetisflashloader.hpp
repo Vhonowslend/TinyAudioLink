@@ -18,16 +18,13 @@
 #include <cinttypes>
 #include <cstddef>
 
-// This is critical, so ensure it's byte aligned.
-#pragma pack(push, 1)
-
 #ifndef TEENSY_FLASH_SIZE
 #define TEENSY_FLASH_SIZE 0x00800000
 #endif
 
 namespace nxp {
 	// Defaults are for loading from NAND Flash. It can support NOR Flash and SD/eMMC.
-	struct kinetis_flash_loader_t {
+	struct [[gnu::packed, gnu::aligned(1)]] kinetis_flash_loader_t {
 		// 0x000 Tag
 		uint32_t tag = 0x42464346; // FCFB
 		// 0x004 Version
@@ -254,5 +251,3 @@ namespace nxp {
 
 	[[gnu::used, gnu::section(".flashLoader")]] static kinetis_flash_loader_t __flash_loader = {};
 } // namespace nxp
-
-#pragma pack(pop)

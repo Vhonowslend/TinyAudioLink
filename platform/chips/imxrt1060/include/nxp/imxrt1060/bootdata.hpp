@@ -18,9 +18,6 @@
 #include <cinttypes>
 #include <cstddef>
 
-// This is critical, so ensure it's byte aligned.
-#pragma pack(push, 1)
-
 // Start of the Flash image.
 extern std::size_t __flash_start;
 
@@ -31,7 +28,7 @@ namespace nxp::imxrt1060 {
 	/** Boot Data
 	 * - IMXRT1060RM_rev1_Processor_Manual.pdf: 8.7.1.2
 	 */
-	struct boot_data_t {
+	struct [[gnu::packed, gnu::aligned(1)]] boot_data_t {
 		// 0x00 Absolute address of the image.
 		std::size_t start = reinterpret_cast<std::size_t>(&__flash_start);
 		// 0x04 Length of the image.
@@ -44,5 +41,3 @@ namespace nxp::imxrt1060 {
 
 	extern boot_data_t __boot_data;
 } // namespace nxp::imxrt1060
-
-#pragma pack(pop)

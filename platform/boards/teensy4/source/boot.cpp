@@ -23,8 +23,10 @@
 #include <cstdlib>
 #include <cstring>
 #include <nxp/imxrt1060/bootdata.hpp>
+#include <nxp/imxrt1060/deviceconfigurationdata.hpp>
 #include <nxp/imxrt1060/gpio.hpp>
 #include <nxp/imxrt1060/imagevectortable.hpp>
+#include <nxp/imxrt1060/imxrt1060.h>
 #include <nxp/imxrt1060/iomuxc.hpp>
 #include <nxp/imxrt1060/nvic.hpp>
 #include <nxp/kinetisflashloader.hpp>
@@ -55,101 +57,116 @@ void boot_memset(void* dest, uint8_t value, size_t count)
 extern "C" [[gnu::used, gnu::noreturn, gnu::section(".flashCode")]]
 void _start(void)
 {
+	{ // Enable all caches.
+		asm volatile("dmb;dsb;isb;" ::: "memory");
+		arm::cm7::cache::data::enable();
+		arm::cm7::cache::instruction::enable();
+	}
+
+	{ // Enable any available Floating Point Units.
+		arm::cm7::fpu::enable(); // This is a NOP if it's not supported.
+	}
+
+	{ // Initialize ITCM
+		extern std::size_t __fast_code_length; // Flash Fast Code End
+		extern std::size_t __fast_code_address; // Flash Fast Code Address
+		extern std::size_t __itcm_start; // ITCM Address
+		boot_memcpy(&__itcm_start, &__fast_code_address, reinterpret_cast<std::size_t>(&__fast_code_length));
+	}
+
+	{ // Initialize DTCM
+		extern std::size_t __fast_data_length; // Flash Fast Data End
+		extern std::size_t __fast_data_address; // Flash Fast Data Address
+		extern std::size_t __dtcm_start; // DTCM Address
+		boot_memcpy(&__dtcm_start, &__fast_data_address, reinterpret_cast<std::size_t>(&__fast_data_length));
+	}
+
+	// Wait until everything is synchronized again.
+	asm volatile("dmb;dsb;isb;" ::: "memory");
+
+	if (true) { // Zero BSS area
+		extern std::size_t __bss_start; // BSS Start
+		extern std::size_t __bss_length; // BSS End
+		boot_memset(&__bss_start, 0x00, reinterpret_cast<std::size_t>(&__bss_length));
+	}
+
+	if (true) { // Zero TBSS area
+		extern std::size_t __tbss_start; // BSS Start
+		extern std::size_t __tbss_length; // BSS End
+		boot_memset(&__tbss_start, 0x00, reinterpret_cast<std::size_t>(&__tbss_length));
+	}
+
+	if (true) { // Zero EH_Frame area
+		extern std::size_t __eh_frame_start; // BSS Start
+		extern std::size_t __eh_frame_length; // BSS End
+		boot_memset(&__eh_frame_start, 0x00, reinterpret_cast<std::size_t>(&__eh_frame_length));
+	}
+
+	// Initialize Internal Memory
+	if (BOARD_IRAM_SIZE > 0) {
+		extern std::size_t __board_iram_address;
+		extern std::size_t __board_iram_length;
+		boot_memcpy(BOARD_IRAM, &__board_iram_address, reinterpret_cast<std::size_t>(&__board_iram_length));
+	}
+
+	// Initialize External Memory
+	if (BOARD_ERAM_SIZE > 0) {
+		extern std::size_t __board_eram_address;
+		extern std::size_t __board_eram_length;
+		boot_memcpy(BOARD_ERAM, &__board_eram_address, reinterpret_cast<std::size_t>(&__board_eram_length));
+	}
+
+	// Wait until everything is synchronized again.
+	asm volatile("dmb;dsb;isb;" ::: "memory");
+
+	// Do apparently nothing.
+	// - Reduce bias current by 30% on ACMP1, ACMP3.
+	// - Increase bias current by 30% on ACMP1, ACMP3.
+	nxp::imxrt1060::iomuxc::gpr::GPR14 = 0b101010100000000000000000;
+
+	// Set up NVIC properly.
+	nxp::imxrt1060::nvic::initialize();
+
+	// Run pre-init.
+	{
+		extern void (*__preinit_array_start[])(void) __attribute__((weak));
+		extern void (*__preinit_array_end[])(void) __attribute__((weak));
+		for (size_t edx = __preinit_array_end - __preinit_array_start, idx = 0; idx < edx; idx++) {
+			__preinit_array_start[idx]();
+		}
+	}
+
+	// Run init.
+	{
+		extern void (*__init_array_start[])(void) __attribute__((weak));
+		extern void (*__init_array_end[])(void) __attribute__((weak));
+		for (size_t edx = __init_array_end - __init_array_start, idx = 0; idx < edx; idx++) {
+			__init_array_start[idx]();
+		}
+	}
+
+// Run main.
+#ifdef __cpp_exceptions
 	try {
-		{ // Enable all caches.
-			asm volatile("dmb;dsb;isb;" ::: "memory");
-			arm::cm7::cache::data::enable();
-			arm::cm7::cache::instruction::enable();
-		}
-
-		{ // Enable any available Floating Point Units.
-			arm::cm7::fpu::enable(); // This is a NOP if it's not supported.
-		}
-
-		{ // Initialize ITCM
-			extern std::size_t __fast_code_length; // Flash Fast Code End
-			extern std::size_t __fast_code_address; // Flash Fast Code Address
-			extern std::size_t __itcm_start; // ITCM Address
-			boot_memcpy(&__itcm_start, &__fast_code_address, reinterpret_cast<std::size_t>(&__fast_code_length));
-		}
-
-		{ // Initialize DTCM
-			extern std::size_t __fast_data_length; // Flash Fast Data End
-			extern std::size_t __fast_data_address; // Flash Fast Data Address
-			extern std::size_t __dtcm_start; // DTCM Address
-			boot_memcpy(&__dtcm_start, &__fast_data_address, reinterpret_cast<std::size_t>(&__fast_data_length));
-		}
-
-		// Wait until everything is synchronized again.
-		asm volatile("dmb;dsb;isb;" ::: "memory");
-
-		if (false) { // Zero BSS area
-			extern std::size_t __bss_start; // BSS Start
-			extern std::size_t __bss_length; // BSS End
-			boot_memset(&__bss_start, 0x00, reinterpret_cast<std::size_t>(&__bss_length));
-		}
-
-		// Initialize Internal Memory
-		if (BOARD_IRAM_SIZE > 0) {
-			extern std::size_t __board_iram_address;
-			extern std::size_t __board_iram_length;
-			boot_memcpy(BOARD_IRAM, &__board_iram_address, reinterpret_cast<std::size_t>(&__board_iram_length));
-		}
-
-		// Initialize External Memory
-		if (BOARD_ERAM_SIZE > 0) {
-			extern std::size_t __board_eram_address;
-			extern std::size_t __board_eram_length;
-			boot_memcpy(BOARD_ERAM, &__board_eram_address, reinterpret_cast<std::size_t>(&__board_eram_length));
-		}
-
-		// Wait until everything is synchronized again.
-		asm volatile("dmb;dsb;isb;" ::: "memory");
-
-		// Do apparently nothing.
-		// - Reduce bias current by 30% on ACMP1, ACMP3.
-		// - Increase bias current by 30% on ACMP1, ACMP3.
-		nxp::imxrt1060::iomuxc::gpr::GPR14 = 0b101010100000000000000000;
-
-		// Set up NVIC properly.
-		nxp::imxrt1060::nvic::initialize();
-
-		// Run pre-init.
-		{
-			extern void (*__preinit_array_start[])(void) __attribute__((weak));
-			extern void (*__preinit_array_end[])(void) __attribute__((weak));
-			for (size_t edx = __preinit_array_end - __preinit_array_start, idx = 0; idx < edx; idx++) {
-				__preinit_array_start[idx]();
-			}
-		}
-
-		// Run init.
-		{
-			extern void (*__init_array_start[])(void) __attribute__((weak));
-			extern void (*__init_array_end[])(void) __attribute__((weak));
-			for (size_t edx = __init_array_end - __init_array_start, idx = 0; idx < edx; idx++) {
-				__init_array_start[idx]();
-			}
-		}
-
-		// Run main.
+#endif
 		main();
-
-		// Run fini.
-		{
-			extern void (*__fini_array_start[])(void) __attribute__((weak));
-			extern void (*__fini_array_end[])(void) __attribute__((weak));
-			for (size_t edx = __fini_array_end - __fini_array_start, idx = 0; idx < edx; idx++) {
-				__fini_array_start[idx]();
-			}
-		}
+#ifdef __cpp_exceptions
 	} catch (...) {
-		exit(1);
+	}
+#endif
+
+	// Run fini.
+	{
+		extern void (*__fini_array_start[])(void) __attribute__((weak));
+		extern void (*__fini_array_end[])(void) __attribute__((weak));
+		for (size_t edx = __fini_array_end - __fini_array_start, idx = 0; idx < edx; idx++) {
+			__fini_array_start[idx]();
+		}
 	}
 
 	__builtin_unreachable();
 
 	// If this returns, the chip "crashes" and we usually reset anyway in that case.
 	// ToDo: Forcefully trigger a reset if we ever reach this.
-	exit(0);
+	//exit(0);
 }

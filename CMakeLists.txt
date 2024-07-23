@@ -167,6 +167,13 @@ version(GENERATE PROJECT_VERSION
 )
 
 ################################################################################
+# Options
+################################################################################
+set(BOARD_NAME "${BOARD_NAME}" CACHE STRING "The Board for which to build, see '/platform/boards'.")
+set(BOARD_VERSION "${BOARD_VERSION}" CACHE STRING "Which board version are we building for? See '/platform/boards/$BOARD_NAME/.")
+set(ENABLE_EXCEPTIONS ON CACHE BOOL "Enable support for C++ Exceptions? This massively bloats the file.")
+
+################################################################################
 # Functionality
 ################################################################################
 function(configure TARGET)
@@ -178,18 +185,36 @@ function(configure TARGET)
 		CXX_STANDARD_REQUIRED ON
 		CXX_EXTENSIONS OFF
 	)
+	target_compile_options(${TARGET}
+		PUBLIC
+			"-fmodules"
+	)
+	target_link_libraries(${TARGET}
+		PUBLIC
+			"m" # C Math
+			"c++" # C++ Stuff
+	)
 	if((CMAKE_CXX_COMPILER_ID STREQUAL "Clang") OR (CMAKE_CXX_COMPILER_ID STREQUAL "AppleClang"))
 		# Prefer Thin-LTO over Whole-LTO (it's faster, and seems to be better now too).
 		foreach(CONFIG IN LISTS CMAKE_CONFIGURATION_TYPES)
 			get_target_property(LTO ${TARGET} INTERPROCEDURAL_OPTIMIZATION_${CONFIG})
 			if(LTO)
 				target_compile_options(${TARGET} PUBLIC "$<$<CONFIG:${CONFIG}>:-flto=thin>")
+				target_link_options(${TARGET} PUBLIC "$<$<CONFIG:${CONFIG}>:-flto=thin>")
 			endif()
 		endforeach()
 		get_target_property(LTO ${TARGET} INTERPROCEDURAL_OPTIMIZATION)
 		if(LTO)
 			target_compile_options(${TARGET} PUBLIC "-flto=thin")
+			target_link_options(${TARGET} PUBLIC "-flto=thin")
 		endif()
+	endif()
+	if(NOT ENABLE_EXCEPTIONS)
+		target_compile_options(${TARGET}
+			PUBLIC
+				"-fno-rtti"
+				"-fno-exceptions"
+		)
 	endif()
 endfunction()
 
@@ -210,11 +235,39 @@ function(link TARGET LINK_TARGET)
 	)
 endfunction()
 
-################################################################################
-# Options
-################################################################################
-set(BOARD_NAME "${BOARD_NAME}" CACHE STRING "The Board for which to build, see '/platform/boards'.")
-set(BOARD_VERSION "${BOARD_VERSION}" CACHE STRING "Which board version are we building for? See '/platform/boards/$BOARD_NAME/.")
+function(postprocess TARGET)
+	# Strip unnecessary crap that isn't automatically removed by LTO.
+	add_custom_command(
+		TARGET ${TARGET}
+		POST_BUILD
+		COMMAND "${CMAKE_STRIP}"
+		ARGS "--strip-unneeded" "$<TARGET_FILE:${TARGET}>"
+	)
+
+	# Post-processing so it can actually be run.
+	set_property(
+		TARGET ${TARGET}
+		APPEND PROPERTY ADDITIONAL_CLEAN_FILES "$<TARGET_FILE_DIR:${TARGET}>/$<TARGET_FILE_BASE_NAME:${TARGET}>.hex"
+	)
+	add_custom_command(
+		TARGET ${TARGET}
+		POST_BUILD
+		COMMAND "${CMAKE_OBJCOPY}"
+		ARGS -O ihex "--strip-unneeded" "--regex" "--only-section=\\.flash.*" "$<TARGET_FILE:${TARGET}>" "$<TARGET_FILE_DIR:${TARGET}>/$<TARGET_FILE_BASE_NAME:${TARGET}>.hex"
+	)
+
+	# Post-Processing for debugging Assembly.
+	set_property(
+		TARGET ${TARGET}
+		APPEND PROPERTY ADDITIONAL_CLEAN_FILES "$<TARGET_FILE_DIR:${TARGET}>/$<TARGET_FILE_BASE_NAME:${TARGET}>.asm"
+	)
+	add_custom_command(
+		TARGET ${TARGET}
+		POST_BUILD
+		COMMAND "${CMAKE_OBJDUMP}"
+		ARGS --disassemble-all --line-numbers --source --demangle --symbolize-operands "$<TARGET_FILE:${TARGET}>" > "$<TARGET_FILE_DIR:${TARGET}>/$<TARGET_FILE_BASE_NAME:${TARGET}>.asm"
+	)
+endfunction()
 
 ################################################################################
 # Sub-projects
@@ -270,7 +323,6 @@ target_include_directories(${PROJECT_NAME}
 	PRIVATE "source"
 	PUBLIC "include"
 )
-
 
 # Always do this last, it's order dependent unfortunately.
 generate_compile_commands_json(TARGETS ${PROJECT_NAME})
