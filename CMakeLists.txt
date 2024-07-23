@@ -14,11 +14,11 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-cmake_minimum_required(VERSION 3.26)
-list(APPEND CMAKE_MESSAGE_INDENT "[TinyAudioLink] ")
+cmake_minimum_required(VERSION 3.30...4.0)
 project(TinyAudioLink
 	LANGUAGES C CXX ASM
 )
+list(APPEND CMAKE_MESSAGE_INDENT "[TinyAudioLink]" " ")
 
 ################################################################################
 # Modules
@@ -157,9 +157,6 @@ if(NOT (VERSION_COMMIT STREQUAL ""))
 	set(_VERSION_THIN "${_VERSION_THIN}-${_VERSION_BUILD}")
 endif()
 
-# Parse & Log the detected version.
-message(STATUS "Version ${_VERSION_THIN}")
-
 # Metadata
 version(GENERATE PROJECT_VERSION
 	MAJOR "${_VERSION_MAJOR}"
@@ -169,74 +166,113 @@ version(GENERATE PROJECT_VERSION
 	REQUIRE "PATCH;TWEAK"
 )
 
-project(${PROJECT_NAME} VERSION ${PROJECT_VERSION})
+################################################################################
+# Functionality
+################################################################################
+function(configure TARGET)
+	set_target_properties(${TARGET} PROPERTIES
+		# Set C++ Standard and Extensions
+		C_STANDARD 17
+		C_STANDARD_REQUIRED ON
+		CXX_STANDARD 20
+		CXX_STANDARD_REQUIRED ON
+		CXX_EXTENSIONS OFF
+	)
+	if((CMAKE_CXX_COMPILER_ID STREQUAL "Clang") OR (CMAKE_CXX_COMPILER_ID STREQUAL "AppleClang"))
+		# Prefer Thin-LTO over Whole-LTO (it's faster, and seems to be better now too).
+		foreach(CONFIG IN LISTS CMAKE_CONFIGURATION_TYPES)
+			get_target_property(LTO ${TARGET} INTERPROCEDURAL_OPTIMIZATION_${CONFIG})
+			if(LTO)
+				target_compile_options(${TARGET} PUBLIC "$<$<CONFIG:${CONFIG}>:-flto=thin>")
+			endif()
+		endforeach()
+		get_target_property(LTO ${TARGET} INTERPROCEDURAL_OPTIMIZATION)
+		if(LTO)
+			target_compile_options(${TARGET} PUBLIC "-flto=thin")
+		endif()
+	endif()
+endfunction()
+
+function(link TARGET LINK_TARGET)
+	target_sources(${TARGET} PUBLIC $<TARGET_OBJECTS:${LINK_TARGET}>)
+	target_include_directories(${TARGET} PUBLIC
+		"$<TARGET_PROPERTY:${LINK_TARGET},INTERFACE_INCLUDE_DIRECTORIES>"
+	)
+	target_link_libraries(${TARGET} PUBLIC
+		${LINK_TARGET}
+#		"$<TARGET_PROPERTY:${LINK_TARGET},INTERFACE_LINK_LIBRARIES>"
+	)
+	target_link_options(${TARGET} PUBLIC
+		"$<TARGET_PROPERTY:${LINK_TARGET},INTERFACE_LINK_OPTIONS>"
+	)
+	target_compile_options(${TARGET} PUBLIC
+		"$<TARGET_PROPERTY:${LINK_TARGET},INTERFACE_COMPILE_OPTIONS>"
+	)
+endfunction()
 
 ################################################################################
 # Options
 ################################################################################
-set(BOARD_NAME "${BOARD_NAME}" CACHE STRING "The Board for which to build.")
-set(BOARD_VERSION "${BOARD_VERSION}" CACHE STRING "The Board version for which this should be built. Leave empty if there is no version.")
+set(BOARD_NAME "${BOARD_NAME}" CACHE STRING "The Board for which to build, see '/platform/boards'.")
+set(BOARD_VERSION "${BOARD_VERSION}" CACHE STRING "Which board version are we building for? See '/platform/boards/$BOARD_NAME/.")
 
 ################################################################################
-# Board support
+# Sub-projects
 ################################################################################
 
-# Teensy
-string(TOLOWER "${BOARD_NAME}" BOARD_NAME_L)
-if(BOARD_NAME_L MATCHES "teensy")
-	# Teensy 4.x
-	if(BOARD_VERSION MATCHES "^4.*")
-		add_subdirectory("boards/teensy4")
-	endif()
-endif()
+# CPUs
+file(GLOB _CPUS LIST_DIRECTORIES TRUE RELATIVE "${CMAKE_SOURCE_DIR}" CONFIGURE_DEPENDS "platform/cpus/*")
+message(STATUS "CPUs Supported: ")
+foreach(_T IN LISTS _CPUS)
+	add_subdirectory("${_T}")
+endforeach()
+
+# System-on-Chips
+file(GLOB _SOCS LIST_DIRECTORIES TRUE RELATIVE "${CMAKE_SOURCE_DIR}" CONFIGURE_DEPENDS "platform/chips/*")
+message(STATUS "SoCs Supported: ")
+foreach(_T IN LISTS _SOCS)
+	add_subdirectory("${_T}")
+endforeach()
+
+# Boards
+file(GLOB _BOARDS LIST_DIRECTORIES TRUE RELATIVE "${CMAKE_SOURCE_DIR}" CONFIGURE_DEPENDS "platform/boards/*")
+message(STATUS "Boards Supported: ")
+foreach(_T IN LISTS _BOARDS)
+	add_subdirectory("${_T}")
+endforeach()
 
 ################################################################################
 # Project
 ################################################################################
 
+project(TinyAudioLink
+	LANGUAGES C CXX ASM
+	VERSION ${PROJECT_VERSION}
+)
+
+# Log the detected version.
+message(STATUS "Version ${_VERSION_THIN}")
+
 add_executable(${PROJECT_NAME})
-set_target_properties(${PROJECT_NAME} PROPERTIES
-	# Set C++ Standard and Extensions
-	C_STANDARD 17
-	C_STANDARD_REQUIRED ON
-	CXX_STANDARD 20
-	CXX_STANDARD_REQUIRED ON
-	CXX_EXTENSIONS OFF
+configure(${PROJECT_NAME})
+link(${PROJECT_NAME} ${BOARD_NAME})
+postprocess(${PROJECT_NAME})
 
-	# Remove prefix from generated files.
-	PREFIX ""
-	IMPORT_PREFIX ""
-
-	# Never treat warnings as errors.
-	COMPILE_WARNING_AS_ERROR OFF
-)
-
-file(GLOB_RECURSE SOURCES FOLLOW_SYMLINKS CONFIGURE_DEPENDS "source/*")
-#list(FILTER SOURCES INCLUDE REGEX ".*\.(c|h|cxx|hxx|cpp|hpp)$")
-source_group(TREE "${CMAKE_CURRENT_SOURCE_DIR}/source" PREFIX "Source Files" FILES ${TEMPLATES})
+file(GLOB_RECURSE _INCLUDE FOLLOW_SYMLINKS CONFIGURE_DEPENDS "include/*")
+source_group(TREE "${CMAKE_CURRENT_SOURCE_DIR}/include" PREFIX "Public" FILES ${_INCLUDE})
+file(GLOB_RECURSE _SOURCE FOLLOW_SYMLINKS CONFIGURE_DEPENDS "source/*")
+source_group(TREE "${CMAKE_CURRENT_SOURCE_DIR}/source" PREFIX "Private" FILES ${_SOURCE})
 target_sources(${PROJECT_NAME}
-	PRIVATE
-		${SOURCES}
+	PRIVATE ${_SOURCE}
+	PUBLIC ${_INCLUDE}
 )
-
 target_include_directories(${PROJECT_NAME}
-	PRIVATE
-		"source"
+	PRIVATE "source"
+	PUBLIC "include"
 )
 
-generate_compile_commands_json(
-	TARGETS ${PROJECT_NAME}
-)
-clang_tidy(
-	TARGETS ${PROJECT_NAME}
-	VERSION 15.0.0
-)
-clang_format(
-	TARGETS ${PROJECT_NAME}
-	VERSION 15.0.0
-	DEPENDENCY
-	GLOBAL
-)
 
-# Configure the target for the chosen board
-configure_board(${PROJECT_NAME})
+# Always do this last, it's order dependent unfortunately.
+generate_compile_commands_json(TARGETS ${PROJECT_NAME})
+clang_tidy(TARGETS ${PROJECT_NAME} VERSION 15.0.0)
+clang_format(TARGETS ${PROJECT_NAME} VERSION 15.0.0 DEPENDENCY GLOBAL)

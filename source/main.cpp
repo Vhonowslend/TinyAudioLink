@@ -16,7 +16,7 @@
 
 #include <cinttypes>
 #include <cstddef>
-#include "nxp/imxrt1060/gpio.hpp"
+#include <nxp/imxrt1060/gpio.hpp>
 
 using namespace nxp;
 
