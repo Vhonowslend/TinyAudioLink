@@ -25,7 +25,7 @@
 #include <nxp/imxrt1060/deviceconfigurationdata.hpp>
 #include <nxp/imxrt1060/gpio.hpp>
 #include <nxp/imxrt1060/imagevectortable.hpp>
-#include <nxp/imxrt1060/iomuxc.hpp>
+#include <nxp/imxrt1060/imxrt1060.hpp>
 #include <nxp/kinetis.hpp>
 
 #include <arm/cm7/cm7.h>
@@ -146,7 +146,7 @@ void _main(void) noexcept
 		{ // Do apparently nothing.
 			// - Reduce bias current by 30% on ACMP1, ACMP3.
 			// - Increase bias current by 30% on ACMP1, ACMP3.
-			nxp::imxrt1060::iomuxc::gpr::GPR14 = 0b101010100000000000000000;
+			nxp::imxrt1060::IOMUXC_GPR14 = 0b101010100000000000000000;
 		}
 
 		{ // Enable SysTick timer support.
