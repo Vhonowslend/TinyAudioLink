@@ -65,5 +65,3 @@ namespace nxp::imxrt1060 {
 
 	static_assert(sizeof(nxp::imxrt1060::image_vector_table_t) == 32, "Image Vector Table must be 32 bytes long.");
 } // namespace nxp::imxrt1060
-
-extern const nxp::imxrt1060::image_vector_table_t __image_vector_table;

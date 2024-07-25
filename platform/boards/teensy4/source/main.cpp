@@ -44,12 +44,14 @@ void __main(void) noexcept
 	// Seems like we're offset by one byte exactly?
 	asm volatile("nop");
 
+	// This is done via DCD as well, but just to be safe on reset, we do it again here.
 	// GPR17: Set FLEXRAM_BANK_CFG
 	asm volatile("str %[val], %[gpr]"
 				 : [gpr] "=g"(__IMXRT1060_IOMUXC_GPR17)
 				 : [val] "r"(&__flexram_bank_config)
 				 : "memory");
 
+	// This is done via DCD as well, but just to be safe on reset, we do it again here.
 	// GPR16: Set CM7_INIT_VTOR, and FLEXRAM_BANK_CFG_SEL
 	// VTOR: Set Interrupt Vector Table Offset correctly.
 	asm volatile(

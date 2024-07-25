@@ -43,57 +43,51 @@ namespace nxp::imxrt1060::device_configuration_data {
 		} parameter;
 	};
 
-	namespace write {
-		struct [[gnu::packed, gnu::aligned(1)]] command_t {
-			command_header_t header{
-				.tag       = 0xCC,
-				.length    = htobe16(sizeof(command_t)),
-				.parameter = {0},
-			};
-			std::intptr_t* address = 0;
-
-			union {
-				size_t  number = 0;
-				size_t* pointer;
-			} value_or_mask;
-		}; // namespace write
-	} // namespace write
-
-	namespace check {
-		struct [[gnu::packed, gnu::aligned(1)]] command_t {
-			command_header_t header{
-				.tag       = 0xCF,
-				.length    = htobe16(sizeof(command_t)),
-				.parameter = {0},
-			};
-			std::intptr_t* address = 0;
-
-			union {
-				size_t  number = 0;
-				size_t* pointer;
-			} mask;
+	struct [[gnu::packed, gnu::aligned(1)]] write_t {
+		command_header_t header{
+			.tag       = 0xCC,
+			.length    = htobe16(sizeof(write_t)),
+			.parameter = {0},
 		};
+		std::intptr_t* address = 0;
 
-		struct limit_command_t {
-			command_t command{
-				.header =
-					{
-						.length = htobe16(sizeof(limit_command_t)),
-					},
-			};
-			size_t count = 1;
-		};
-	} // namespace check
+		union {
+			size_t  number = 0;
+			size_t* pointer;
+		} value_or_mask;
+	}; // namespace write
 
-	namespace nop {
-		struct [[gnu::packed, gnu::aligned(1)]] command_t {
-			command_header_t header{
-				.tag       = 0xC0,
-				.length    = htobe16(sizeof(command_t)),
-				.parameter = {0},
-			};
+	struct [[gnu::packed, gnu::aligned(1)]] check_command_t {
+		command_header_t header{
+			.tag       = 0xCF,
+			.length    = htobe16(sizeof(check_command_t)),
+			.parameter = {0},
 		};
-	} // namespace nop
+		std::intptr_t* address = 0;
+
+		union {
+			size_t  number = 0;
+			size_t* pointer;
+		} mask;
+	};
+
+	struct limit_command_t {
+		check_command_t command{
+			.header =
+				{
+					.length = htobe16(sizeof(limit_command_t)),
+				},
+		};
+		size_t count = 1;
+	};
+
+	struct [[gnu::packed, gnu::aligned(1)]] nop_t {
+		command_header_t header{
+			.tag       = 0xC0,
+			.length    = htobe16(sizeof(nop_t)),
+			.parameter = {0},
+		};
+	};
 
 	struct [[gnu::packed, gnu::aligned(1)]] data_t {
 		header_t header{
