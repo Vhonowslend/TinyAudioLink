@@ -17,9 +17,9 @@
 #pragma once
 #include <cinttypes>
 #include <endian.h>
+#include "arm/cm7/nvic.hpp"
 #include "nxp/imxrt1060/bootdata.hpp"
 #include "nxp/imxrt1060/deviceconfigurationdata.hpp"
-#include "nxp/imxrt1060/nvic.hpp"
 #include "nxp/nxp.hpp"
 
 #ifndef NXP_IVT
@@ -47,7 +47,7 @@ namespace nxp::imxrt1060 {
 		void (*entryPoint)() = nullptr;
 #else
 		// 0x04 Entry: Absolute address of the interrupt vector table
-		nxp::imxrt1060::nvic::interrupt_vector_table_t* ivt = nullptr;
+		arm::cm7::nvic::interrupt_vector_table_t* ivt = nullptr;
 #endif
 		// 0x08 Reserved, must be zero.
 		uint32_t __reserved1 = 0;

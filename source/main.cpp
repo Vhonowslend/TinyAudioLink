@@ -21,6 +21,15 @@
 
 using namespace nxp;
 
+/*static uint64_t tick      = 0;
+static uint64_t cycle10ms = 0;
+
+extern "C" [[gnu::used, gnu::cdecl]]
+void int_systick(void)
+{
+	++tick;
+}*/
+
 extern "C" [[gnu::used]]
 int main()
 {
@@ -38,10 +47,29 @@ nop; nop; nop; nop; nop; nop; nop; nop; nop; nop; nop; nop; nop; nop; nop; nop; 
 		)");
 	}
 
-	arm::cm7::SYST_RVR = size_t(1);
-	arm::cm7::SYST_CVR = size_t(1);
-	auto systick       = arm::cm7::SYST_CALIB;
-	arm::cm7::SYST_CSR = size_t(0b111);
+	/*{ // Enable SysTick clock
+		auto systick = arm::cm7::SYST_CALIB;
+
+		// Do we have a reference clock?
+		if (systick & (0b1 << 31) == 0) {
+			// Yes, so attempt to use it.
+			bool is_10ms_skewed = (systick & (1 << 30)) != 0;
+			if (!is_10ms_skewed) {
+				cycle10ms = systick & ((1 << 24) - 1);
+			}
+		}
+
+		// Were we able to use the reference clock without issues?
+		if (cycle10ms == 0) {
+			// No, so we need to use the external
+		}
+	}
+
+	arm::cm7::SHPR3 = 0x20200000;
+
+	arm::cm7::SYST_RVR = size_t(cycle10ms / 1000);
+	arm::cm7::SYST_CVR = size_t(0);
+	arm::cm7::SYST_CSR = size_t(0b111);*/
 
 	/*
 	uint8_t idx = 0;

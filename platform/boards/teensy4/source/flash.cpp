@@ -1,6 +1,6 @@
+#include <arm/cm7/nvic.hpp>
 #include <nxp/imxrt1060/bootdata.hpp>
 #include <nxp/imxrt1060/imagevectortable.hpp>
-#include <nxp/imxrt1060/nvic.hpp>
 #include <nxp/kinetis.hpp>
 #include "board.h"
 
@@ -16,8 +16,9 @@ extern "C" void __main(void);
 	.plugin = 0,
 };
 
-[[gnu::used, gnu::section(".interruptVectorTable")]] nxp::imxrt1060::nvic::interrupt_vector_table_t __interrupt_vector_table = {
-	.initial_stack_pointer = reinterpret_cast<decltype(nxp::imxrt1060::nvic::interrupt_vector_table_t::initial_stack_pointer)>(&__stack_start),
+[[gnu::used, gnu::section(".interruptVectorTable")]] arm::cm7::nvic::interrupt_vector_table_t __interrupt_vector_table = {
+	.initial_stack_pointer = reinterpret_cast<decltype(arm::cm7::nvic::interrupt_vector_table_t::initial_stack_pointer)>(&__stack_start),
+	.interrupts            = {0},
 };
 
 [[gnu::used, gnu::section(".imageVectorTable")]] const nxp::imxrt1060::image_vector_table_t __image_vector_table = {

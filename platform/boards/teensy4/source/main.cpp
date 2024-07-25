@@ -19,23 +19,23 @@
 
 #include <arm/cm7/cache.hpp>
 #include <arm/cm7/fpu.hpp>
+#include <arm/cm7/nvic.hpp>
 #include <nxp/imxrt1060/bootdata.hpp>
 #include <nxp/imxrt1060/deviceconfigurationdata.hpp>
 #include <nxp/imxrt1060/gpio.hpp>
 #include <nxp/imxrt1060/imagevectortable.hpp>
 #include <nxp/imxrt1060/iomuxc.hpp>
-#include <nxp/imxrt1060/nvic.hpp>
 #include <nxp/kinetis.hpp>
 
 #include <arm/cm7/cm7.h>
 #include <nxp/imxrt1060/imxrt1060.h>
 #include "board.h"
 
-extern "C" void                                       _exit(int) noexcept;
-extern "C" void                                       _main(void) noexcept;
-extern "C" int                                        main() noexcept;
-extern size_t                                         __flexram_bank_config; // FlexRAM Bank Configuration
-extern nxp::imxrt1060::nvic::interrupt_vector_table_t __interrupt_vector_table;
+extern "C" void                                 _exit(int) noexcept;
+extern "C" void                                 _main(void) noexcept;
+extern "C" int                                  main() noexcept;
+extern size_t                                   __flexram_bank_config; // FlexRAM Bank Configuration
+extern arm::cm7::nvic::interrupt_vector_table_t __interrupt_vector_table;
 
 extern "C" [[gnu::used, gnu::naked, gnu::section(".flashCode")]]
 void __main(void) noexcept
