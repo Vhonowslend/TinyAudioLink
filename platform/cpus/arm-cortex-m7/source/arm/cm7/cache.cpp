@@ -17,14 +17,14 @@
 #include "arm/cm7/cache.hpp"
 #include "arm/cm7/cm7.hpp"
 
-[[gnu::used, gnu::section(".flashCode")]]
-bool arm::cm7::cache::data::enabled()
+[[gnu::section(".flashCode")]]
+bool arm::cm7::cache::data::enabled() noexcept
 {
 	return ((size_t)arm::cm7::CCR) >> 16 & 0b1;
 }
 
-[[gnu::used, gnu::section(".flashCode")]]
-void arm::cm7::cache::data::invalidate()
+[[gnu::section(".flashCode")]]
+void arm::cm7::cache::data::invalidate() noexcept
 {
 	arm::cm7::CSSELR = 0b0;
 	asm volatile("dsb"); // Block until data is synchronized.
@@ -45,8 +45,8 @@ void arm::cm7::cache::data::invalidate()
 	asm volatile("dsb;isb;");
 }
 
-[[gnu::used, gnu::section(".flashCode")]]
-void arm::cm7::cache::data::clean()
+[[gnu::section(".flashCode")]]
+void arm::cm7::cache::data::clean() noexcept
 {
 	arm::cm7::CSSELR = 0b0;
 	asm volatile("dsb"); // Block until data is synchronized.
@@ -67,8 +67,8 @@ void arm::cm7::cache::data::clean()
 	asm volatile("dsb;isb;");
 }
 
-[[gnu::used, gnu::section(".flashCode")]]
-void arm::cm7::cache::data::clean_invalidate()
+[[gnu::section(".flashCode")]]
+void arm::cm7::cache::data::clean_invalidate() noexcept
 {
 	arm::cm7::CSSELR = 0b0;
 	asm volatile("dsb"); // Block until data is synchronized.
@@ -89,12 +89,12 @@ void arm::cm7::cache::data::clean_invalidate()
 	asm volatile("dsb;isb;");
 }
 
-[[gnu::used, gnu::section(".flashCode")]]
-void arm::cm7::cache::data::flush()
+[[gnu::section(".flashCode")]]
+void arm::cm7::cache::data::flush() noexcept
 {}
 
-[[gnu::used, gnu::section(".flashCode")]]
-void arm::cm7::cache::data::enable()
+[[gnu::section(".flashCode")]]
+void arm::cm7::cache::data::enable() noexcept
 {
 	disable();
 	clean_invalidate();
@@ -103,8 +103,8 @@ void arm::cm7::cache::data::enable()
 	asm volatile("dsb;isb;");
 }
 
-[[gnu::used, gnu::section(".flashCode")]]
-void arm::cm7::cache::data::disable()
+[[gnu::section(".flashCode")]]
+void arm::cm7::cache::data::disable() noexcept
 {
 	if (enabled()) {
 		flush();
@@ -114,30 +114,30 @@ void arm::cm7::cache::data::disable()
 	}
 }
 
-[[gnu::used, gnu::section(".flashCode")]]
-bool arm::cm7::cache::instruction::enabled()
+[[gnu::section(".flashCode")]]
+bool arm::cm7::cache::instruction::enabled() noexcept
 {
 	return ((size_t)arm::cm7::CCR) >> 17 & 0b1;
 }
 
-[[gnu::used, gnu::section(".flashCode")]]
-void arm::cm7::cache::instruction::invalidate()
+[[gnu::section(".flashCode")]]
+void arm::cm7::cache::instruction::invalidate() noexcept
 {
 	arm::cm7::CSSELR  = 0b1;
 	arm::cm7::ICIALLU = 0;
 	asm volatile("dsb;isb;");
 }
 
-[[gnu::used, gnu::section(".flashCode")]]
-void arm::cm7::cache::instruction::enable()
+[[gnu::section(".flashCode")]]
+void arm::cm7::cache::instruction::enable() noexcept
 {
 	invalidate(); // Trashes instruction cache, but we don't really care.
 	arm::cm7::CCR |= 0b1 << 17;
 	asm volatile("dsb;isb;");
 }
 
-[[gnu::used, gnu::section(".flashCode")]]
-void arm::cm7::cache::instruction::disable()
+[[gnu::section(".flashCode")]]
+void arm::cm7::cache::instruction::disable() noexcept
 {
 	arm::cm7::CCR = arm::cm7::CCR.operator size_t() & ~(size_t(0b1) << 17ul);
 	asm volatile("dsb;isb;");

@@ -5,7 +5,7 @@ list(POP_BACK CMAKE_MESSAGE_INDENT)
 list(APPEND CMAKE_MESSAGE_INDENT "[ARM Cortex M7]" " ")
 message(STATUS "${PROJECT_NAME}")
 
-add_library(${PROJECT_NAME} OBJECT EXCLUDE_FROM_ALL)
+add_library(${PROJECT_NAME} OBJECT)
 add_library(ARM::Cortex_M7 ALIAS ${PROJECT_NAME})
 configure(${PROJECT_NAME})
 
@@ -28,20 +28,8 @@ target_compile_options(${PROJECT_NAME}
 		"-mfpu=fpv5-d16"
 		# Read/Write Position Independent Code
 		"-frwpi"		
-		# C++: Prefer Copy without temporary objects
-		"$<$<COMPILE_LANGUAGE:CXX>:-felide-constructors>"
-		# C++: Run-Time Type Information
-		"$<$<COMPILE_LANGUAGE:CXX>:-frtti>"
-		# Don't bother with frame pointers
-		"$<$<COMPILE_LANGUAGE:CXX>:-fomit-frame-pointer>"
-		# Default to hiding everything. Sometimes results in smaller binaries
-		"$<$<COMPILE_LANGUAGE:CXX>:-fvisibility=hidden>"
 )
-target_link_options(${PROJECT_NAME}
-	PUBLIC
-		# Default to hiding everything. Sometimes results in smaller binaries
-		"-fvisibility=hidden"
-)
+target_sources(${PROJECT_NAME} INTERFACE $<TARGET_OBJECTS:${PROJECT_NAME}>)
 
 # Always do this last, it's order dependent unfortunately.
 generate_compile_commands_json(TARGETS ${PROJECT_NAME})

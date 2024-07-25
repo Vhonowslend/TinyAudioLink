@@ -1,0 +1,99 @@
+#include "inttypes.h"
+#include "stddef.h"
+
+/** Mark code or data as residing on boot storage
+ * This code and data can be used before main.
+ */
+#define SECTION_CODE_BOOT [[gnu::section(".flashCode")]]
+#define SECTION_DATA_BOOT [[gnu::section(".flashData")]]
+
+/** Mark code or data as residing on boot storage
+ * This code and data can't be used before 'main()'.
+ */
+#define SECTION_CODE_FAST [[gnu::section(".fastCode")]] // Default
+#define SECTION_DATA_FAST [[gnu::section(".fastData")]] // Default
+
+/** Mark code or data as residing in Internal Memory
+ * This code and data can't be used before 'main()'.
+ */
+#define SECTION_CODE_IRAM [[gnu::section(".iramCode")]] // Default (operator::new())
+#define SECTION_DATA_IRAM [[gnu::section(".iramData")]] // Default (Read Only Data)
+
+/** Mark code or data as residing in External Memory
+ * This code and data can't be used before 'main()'.
+ */
+#define SECTION_CODE_ERAM [[gnu::section(".eramCode")]]
+#define SECTION_DATA_ERAM [[gnu::section(".eramData")]]
+
+/** Flash Area
+ */
+#define BOARD_FLASH_START @BOARD_FLASH@
+#define BOARD_FLASH_SIZE @BOARD_FLASH_SIZE@
+extern const intptr_t __flash_end;
+#define BOARD_FLASH_END ((void*)&__flash_end)
+extern const intptr_t __flash_length;
+#define BOARD_FLASH_USED ((size_t)&__flash_length)
+
+/** Tightly Coupled Memory
+ */
+// Instruction area
+extern const intptr_t __itcm_start;
+#define BOARD_ITCM_START ((void*)&__itcm_start)
+extern const intptr_t __itcm_end;
+#define BOARD_ITCM_END ((void*)&__itcm_end)
+extern const intptr_t __itcm_addr;
+#define BOARD_ITCM_FLASH ((void*)&__itcm_addr)
+extern const size_t __itcm_length;
+#define BOARD_ITCM_LENGTH ((size_t)&__itcm_length)
+#define BOARD_ITCM @BOARD_ITCM@
+#define BOARD_ITCM_SIZE @BOARD_ITCM_SIZE@
+
+// Data Area
+extern const intptr_t __dtcm_start;
+#define BOARD_DTCM_START ((void*)&__dtcm_start)
+extern const intptr_t __dtcm_end;
+#define BOARD_DTCM_END ((void*)&__dtcm_end)
+extern const intptr_t __dtcm_data_start;
+#define BOARD_DTCM_DATA_START ((void*)&__dtcm_data_start)
+extern const intptr_t __dtcm_data_addr;
+#define BOARD_DTCM_DATA_FLASH ((void*)&__dtcm_data_addr)
+extern const size_t __dtcm_data_length;
+#define BOARD_DTCM_DATA_LENGTH ((size_t)&__dtcm_data_length)
+#define BOARD_DTCM @BOARD_DTCM@
+#define BOARD_DTCM_SIZE @BOARD_DTCM_SIZE@
+
+/** Internal Memory
+ */
+extern const intptr_t __iram_start;
+#define BOARD_IRAM_START ((void*)&__iram_start)
+extern const intptr_t __iram_end;
+#define BOARD_IRAM_END ((void*)&__iram_end)
+extern const intptr_t __iram_addr;
+#define BOARD_IRAM_FLASH ((void*)&__iram_addr)
+extern const size_t __iram_length;
+#define BOARD_IRAM_LENGTH ((size_t)&__iram_length)
+#define BOARD_IRAM @BOARD_IRAM@
+#define BOARD_IRAM_SIZE @BOARD_IRAM_SIZE@
+
+/** External Memory
+ */
+extern const intptr_t __eram_start;
+#define BOARD_ERAM_START ((void*)&__eram_start)
+extern const intptr_t __eram_end;
+#define BOARD_ERAM_END ((void*)&__eram_end)
+extern const intptr_t __eram_addr;
+#define BOARD_ERAM_FLASH ((void*)&__eram_addr)
+extern const size_t __eram_length;
+#define BOARD_ERAM_LENGTH ((size_t)&__eram_length)
+#define BOARD_ERAM @BOARD_ERAM@
+#define BOARD_ERAM_SIZE @BOARD_ERAM_SIZE@
+
+/** Heap Area
+ */
+extern const intptr_t __heap_start;
+extern const intptr_t __heap_end;
+
+/** Stack Area
+ */
+extern const intptr_t __stack_start;
+extern const intptr_t __stack_end;

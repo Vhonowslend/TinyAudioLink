@@ -1,30 +1,9 @@
-// TinyAudioLink - Seamlessly transfer Audio between USB capable devices
-// Copyright (C) 2019 Michael Fabian 'Xaymar' Dirks
-//
-// This program is free software: you can redistribute it and/or modify
-// it under the terms of the GNU General Public License as published by
-// the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version.
-//
-// This program is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-// GNU General Public License for more details.
-//
-// You should have received a copy of the GNU General Public License
-// along with this program.  If not, see <http://www.gnu.org/licenses/>.
-
 #pragma once
-#include <cinttypes>
-#include <cstddef>
-
-#ifndef TEENSY_FLASH_SIZE
-#define TEENSY_FLASH_SIZE 0x00800000
-#endif
+#include <inttypes.h>
+#include <stddef.h>
 
 namespace nxp {
-	// Defaults are for loading from NAND Flash. It can support NOR Flash and SD/eMMC.
-	struct [[gnu::packed, gnu::aligned(1)]] kinetis_flash_loader_t {
+	struct [[gnu::packed, gnu::aligned(1)]] kinetis_t {
 		// 0x000 Tag
 		uint32_t tag = 0x42464346; // FCFB
 		// 0x004 Version
@@ -91,7 +70,7 @@ namespace nxp {
 		// 0x048 Reserved
 		uint32_t __reserved3[2] = {0};
 		// 0x050 Flash Memory Size
-		uint32_t sflashA1Size = TEENSY_FLASH_SIZE;
+		uint32_t sflashA1Size = -1;
 		// 0x054
 		uint32_t sflashA2Size = 0;
 		// 0x058
@@ -246,8 +225,5 @@ namespace nxp {
 		// 0x1D4 Reserved
 		uint32_t __reserved8[11] = {0};
 	};
-	static constexpr std::size_t kinetisFlashLoader_sz = 0x200;
-	static_assert(sizeof(kinetis_flash_loader_t) == kinetisFlashLoader_sz, "Kinetis Flash Loader must be 512 bytes long.");
-
-	[[gnu::used, gnu::section(".flashLoader")]] static kinetis_flash_loader_t __flash_loader = {};
+	static_assert(sizeof(kinetis_t) == 512, "Kinetis Flash Loader must be 512 bytes long.");
 } // namespace nxp

@@ -21,21 +21,21 @@
 namespace arm::cm7::fpu {
 	/** Does this hardware support an FPU?
 	 */
-	bool supported();
+	bool supported() noexcept;
 
 	/** Is the FPU currently enabled?
 	 */
-	bool enabled();
+	bool enabled() noexcept;
 
 	/** Enable the installed Floating Point Unit.
 	 * 
 	 * Attempting to use hard-floats without an enabled FPU will cause crashes.
 	 */
-	bool enable();
+	bool enable() noexcept;
 
 	/** Disable access to the Floating Point Unit.
 	 * 
 	 * Ensure all code after this point uses soft-float.
 	 */
-	void disable();
+	void disable() noexcept;
 } // namespace arm::cm7::fpu

@@ -15,8 +15,8 @@
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #pragma once
-#include <inttypes.h>
-#include <stddef.h>
+#include <cinttypes>
+#include <cstddef>
 
 namespace nxp {
 	struct [[gnu::packed, gnu::aligned(1)]] header_t {
@@ -24,5 +24,5 @@ namespace nxp {
 		uint16_t length;
 		uint8_t  parameter;
 	};
-
+	static_assert(sizeof(header_t) == 4, "Header must be 4 bytes long.");
 } // namespace nxp

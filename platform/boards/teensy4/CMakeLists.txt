@@ -21,81 +21,73 @@ list(POP_BACK CMAKE_MESSAGE_INDENT)
 list(APPEND CMAKE_MESSAGE_INDENT "[Teensy 4.x]" " ")
 message(STATUS "${PROJECT_NAME}")
 
+set(TEENSY_STACK_SIZE "64K" CACHE STRING "Size (in bytes) of the Stack area.")
+
 # Boards:
 # - Teensy 4.0
 # - Teensy 4.1
 
 set(BOARD_ITCM "0x00000000")
-set(BOARD_ITCM_SIZE "512K")
+set(BOARD_ITCM_SIZE "524288")
 set(BOARD_DTCM "0x20000000")
-set(BOARD_DTCM_SIZE "512K")
-set(BOARD_SRAM "0x20200000")
-set(BOARD_SRAM_SIZE "512K")
+set(BOARD_DTCM_SIZE "524288")
+set(BOARD_IRAM "0x20200000")
+set(BOARD_IRAM_SIZE "524288")
 set(BOARD_FLASH "0x60000000")
 set(BOARD_ERAM "0x70000000")
 if(BOARD_VERSION STREQUAL "4\.1")
 	set(BOARD_LINK_VERSION "41")
-	set(BOARD_FLASH_SIZE "7936K")
-	set(BOARD_FLASH_SIZE_FULL "8388608")
-	set(BOARD_ERAM_SIZE "16384K")
+	set(BOARD_FLASH_SIZE_LINK "7936K") # Flash is slightly smaller if we exclude the bootloader
+	set(BOARD_FLASH_SIZE "8388608")
+	set(BOARD_ERAM_SIZE "16777216")
 elseif(BOARD_VERSION MATCHES "4(\.0)?")
 	set(BOARD_LINK_VERSION "40")
-	set(BOARD_FLASH_SIZE "1984K")
-	set(BOARD_FLASH_SIZE_FULL "2097152")
-	set(BOARD_ERAM_SIZE "0K")
+	set(BOARD_FLASH_SIZE_LINK "1984K")
+	set(BOARD_FLASH_SIZE "2097152")
+	set(BOARD_ERAM_SIZE "0")
 elseif(BOARD_VERSION STREQUAL "M(icro)?M(od)?")
 	set(BOARD_LINK_VERSION "MM")
-	set(BOARD_FLASH_SIZE "16128K")
-	set(BOARD_FLASH_SIZE_FULL "16777216")
-	set(BOARD_ERAM_SIZE "0K")
+	set(BOARD_FLASH_SIZE_LINK "16128K")
+	set(BOARD_FLASH_SIZE "16777216")
+	set(BOARD_ERAM_SIZE "0")
 else()
 	message(FATAL_ERROR "This board (Teensy ${BOARD_VERSION}) is not yet supported. Add support for it and contribute to the project!")
 endif()
 
-add_library(${PROJECT_NAME} OBJECT EXCLUDE_FROM_ALL)
-configure(${PROJECT_NAME})
-link(${PROJECT_NAME} "NXP::IMXRT1060")
-link(${PROJECT_NAME} "ARM::Cortex_M7")
+add_library(${PROJECT_NAME} OBJECT)
 
-configure_file(
-	"${CMAKE_CURRENT_SOURCE_DIR}/linker/layout.ld"
-	"${CMAKE_CURRENT_BINARY_DIR}/layout.ld"
-	@ONLY
-)
-
-# Add Source and Include Files
-file(GLOB_RECURSE _INCLUDE FOLLOW_SYMLINKS CONFIGURE_DEPENDS "include/*")
-source_group(TREE "${CMAKE_CURRENT_SOURCE_DIR}/include" PREFIX "Public" FILES ${_INCLUDE})
-file(GLOB_RECURSE _SOURCE FOLLOW_SYMLINKS CONFIGURE_DEPENDS "source/*")
-source_group(TREE "${CMAKE_CURRENT_SOURCE_DIR}/source" PREFIX "Private" FILES ${_SOURCE})
-target_sources(${PROJECT_NAME}
-	PRIVATE ${_SOURCE}
-	PUBLIC ${_INCLUDE}
-)
-target_include_directories(${PROJECT_NAME}
-	PRIVATE "source"
-	PUBLIC "include"
-)
 target_link_libraries(${PROJECT_NAME}
-	PUBLIC
+	PRIVATE
 		"m" # C Math
 		"c++" # C++ Stuff
 )
-target_link_options(${PROJECT_NAME}
-	PUBLIC
-	INTERFACE
-		"-T" "${CMAKE_CURRENT_BINARY_DIR}/layout.ld"
-)
+link(${PROJECT_NAME} "NXP::IMXRT1060")
+link(${PROJECT_NAME} "ARM::Cortex_M7")
+
 target_compile_definitions(${PROJECT_NAME}
 	PRIVATE
 		TEENSY_FLASH_SIZE=${BOARD_FLASH_SIZE_FULL}
+		TEENSY_IRAM_SIZE=${BOARD_IRAM_SIZE}
+		TEENSY_ERAM_SIZE=${BOARD_ERAM_SIZE}
 )
-#target_compile_options(${PROJECT_NAME}
-#	PRIVATE
-#		"-fno-rtti"
-#		"-fno-exceptions"
-#		"-nostdlib"
-#)
+target_sources(${PROJECT_NAME} INTERFACE $<TARGET_OBJECTS:${PROJECT_NAME}>)
+
+configure_file(
+	"${PROJECT_SOURCE_DIR}/include/board.h.in"
+	"${PROJECT_BINARY_DIR}/include/board.h"
+)
+
+configure_file(
+	"${PROJECT_SOURCE_DIR}/linker/layout.ld"
+	"${PROJECT_BINARY_DIR}/linker/layout.ld"
+	@ONLY
+)
+target_link_options(${PROJECT_NAME}
+	PUBLIC
+		"-T" "${CMAKE_CURRENT_BINARY_DIR}/linker/layout.ld"
+)
+
+configure(${PROJECT_NAME})
 
 # Always do this last, it's order dependent unfortunately.
 generate_compile_commands_json(TARGETS ${PROJECT_NAME})

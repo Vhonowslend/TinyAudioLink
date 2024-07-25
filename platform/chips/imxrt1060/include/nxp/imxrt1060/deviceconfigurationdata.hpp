@@ -15,9 +15,9 @@
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #pragma once
-#include <cinttypes>
-#include <cstddef>
 #include <endian.h>
+#import "cinttypes"
+#import "cstddef"
 #include "nxp/nxp.hpp"
 
 namespace nxp::imxrt1060::device_configuration_data {

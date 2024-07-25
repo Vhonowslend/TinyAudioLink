@@ -22,54 +22,54 @@ namespace arm::cm7::cache {
 	namespace data {
 		/** Is the cache enabled?
 		 */
-		bool enabled();
+		bool enabled() noexcept;
 
 		/** Invalidate the cache.
 		 */
-		void invalidate();
+		void invalidate() noexcept;
 
 		/** Clean the cache
 		 */
-		void clean();
+		void clean() noexcept;
 
 		/** Clean and invalidate the cache
 		 */
-		void clean_invalidate();
+		void clean_invalidate() noexcept;
 
 		/** Flush the cache
 		 * 
 		 */
-		void flush();
+		void flush() noexcept;
 
 		/** Enable the cache.
 		 * 
 		 * This will automatically call clean_invalidate().
 		 */
-		void enable();
+		void enable() noexcept;
 
 		/** Disable the cache.
 		 * 
 		 * This will automatically call flush().
 		 */
-		void disable();
+		void disable() noexcept;
 	} // namespace data
 
 	namespace instruction {
 		/** Is the cache enabled?
 		 */
-		bool enabled();
+		bool enabled() noexcept;
 
 		/** Invalidate the cache.
 		 */
-		void invalidate();
+		void invalidate() noexcept;
 
 		/** Enable the cache.
 		 * Remember to invalidate the cache first.
 		 */
-		void enable();
+		void enable() noexcept;
 
 		/** Disable the cache.
 		 */
-		void disable();
+		void disable() noexcept;
 	} // namespace instruction
 } // namespace arm::cm7::cache

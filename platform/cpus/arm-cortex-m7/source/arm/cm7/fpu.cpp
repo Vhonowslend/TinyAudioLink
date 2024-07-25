@@ -17,8 +17,8 @@
 #include "arm/cm7/fpu.hpp"
 #include "arm/cm7/cm7.hpp"
 
-[[gnu::used, gnu::section(".flashCode")]]
-bool arm::cm7::fpu::supported()
+[[gnu::section(".flashCode")]]
+bool arm::cm7::fpu::supported() noexcept
 {
 	size_t old = arm::cm7::CPACR;
 	arm::cm7::CPACR |= (size_t(0b11) << 20) | (size_t(0b11) << 22);
@@ -27,21 +27,21 @@ bool arm::cm7::fpu::supported()
 	return supported;
 }
 
-[[gnu::used, gnu::section(".flashCode")]]
-bool arm::cm7::fpu::enabled()
+[[gnu::section(".flashCode")]]
+bool arm::cm7::fpu::enabled() noexcept
 {
 	return (((size_t)arm::cm7::CPACR >> 20) & 0b11) | (((size_t)arm::cm7::CPACR >> 22) & 0b11) ? true : false;
 }
 
-[[gnu::used, gnu::section(".flashCode")]]
-bool arm::cm7::fpu::enable()
+[[gnu::section(".flashCode")]]
+bool arm::cm7::fpu::enable() noexcept
 {
 	arm::cm7::CPACR |= (0b11 << 20) | (0b11 << 22);
 	return enabled();
 }
 
-[[gnu::used, gnu::section(".flashCode")]]
-void arm::cm7::fpu::disable()
+[[gnu::section(".flashCode")]]
+void arm::cm7::fpu::disable() noexcept
 {
 	arm::cm7::CPACR = (size_t)arm::cm7::CPACR & ~size_t((size_t(0b11) << 20) | (size_t(0b11) << 22));
 }

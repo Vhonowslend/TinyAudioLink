@@ -14,6 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+#include <arm/cm7/cm7.hpp>
 #include <cinttypes>
 #include <cstddef>
 #include <nxp/imxrt1060/gpio.hpp>
@@ -23,13 +24,6 @@ using namespace nxp;
 extern "C" [[gnu::used]]
 int main()
 {
-	uint8_t idx = 0;
-	size_t  stackpointer;
-	asm volatile(R"(
-		mov %[out], sp
-	)"
-				 : [out] "=r"(stackpointer)::);
-
 	imxrt1060::gpio::GPIO2.direction = 0xFFFFFFFF;
 	imxrt1060::gpio::GPIO2.data      = 0xFFFFFFFF;
 	for (volatile std::size_t i = 0; i < 0x11E1A3 * 3; i = i + 1) {
@@ -43,6 +37,20 @@ nop; nop; nop; nop; nop; nop; nop; nop; nop; nop; nop; nop; nop; nop; nop; nop; 
 nop; nop; nop; nop; nop; nop; nop; nop; nop; nop; nop; nop; nop; nop; nop; nop; nop; nop; nop; nop;
 		)");
 	}
+
+	arm::cm7::SYST_RVR = size_t(1);
+	arm::cm7::SYST_CVR = size_t(1);
+	auto systick       = arm::cm7::SYST_CALIB;
+	arm::cm7::SYST_CSR = size_t(0b111);
+
+	/*
+	uint8_t idx = 0;
+	size_t  stackpointer;
+	asm volatile(R"(
+		mov %[out], sp
+	)"
+				 : [out] "=r"(stackpointer)::);
+
 
 	imxrt1060::gpio::GPIO2.toggle = 0b1000;
 	for (volatile std::size_t i = 0; i < 0x11E1A3 * 3; i = i + 1) {
@@ -90,5 +98,7 @@ nop; nop; nop; nop; nop; nop; nop; nop; nop; nop; nop; nop; nop; nop; nop; nop; 
 			)");
 		}
 	}
+	*/
+
 	return 0;
 }

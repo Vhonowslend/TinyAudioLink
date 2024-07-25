@@ -5,7 +5,7 @@ list(POP_BACK CMAKE_MESSAGE_INDENT)
 list(APPEND CMAKE_MESSAGE_INDENT "[NXP IMXRT1060]" " ")
 message(STATUS "${PROJECT_NAME}")
 
-add_library(${PROJECT_NAME} OBJECT EXCLUDE_FROM_ALL)
+add_library(${PROJECT_NAME} OBJECT)
 add_library(NXP::IMXRT1060 ALIAS ${PROJECT_NAME})
 configure(${PROJECT_NAME})
 link(${PROJECT_NAME} "ARM::Cortex_M7")
@@ -23,7 +23,7 @@ target_include_directories(${PROJECT_NAME}
 	PUBLIC "include"
 )
 target_link_libraries(${PROJECT_NAME}
-	PUBLIC
+	PRIVATE
 		"m" # C Math
 		"c++" # C++ Stuff
 )
@@ -32,12 +32,7 @@ target_compile_options(${PROJECT_NAME}
 		# C++: Omit thread safety guarantees, as IMXRT1060 is entirely single core.
 		"$<$<COMPILE_LANGUAGE:CXX>:-fno-threadsafe-statics>"
 )
-#target_compile_options(${PROJECT_NAME}
-#	PRIVATE
-#		"-fno-rtti"
-#		"-fno-exceptions"
-#		"-nostdlib"
-#)
+target_sources(${PROJECT_NAME} INTERFACE $<TARGET_OBJECTS:${PROJECT_NAME}>)
 
 # Always do this last, it's order dependent unfortunately.
 generate_compile_commands_json(TARGETS ${PROJECT_NAME})

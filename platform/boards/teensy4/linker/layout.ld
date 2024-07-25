@@ -19,7 +19,7 @@
  * - FlexSPI NOR Flash uses 256 byte pages with 4096 byte sectors.
  *   - Align to sector, since it speeds up Flash access.
  * - ITCM and DTCM must be initialized by software.
- * - SRAM is run via On-Chip RAM2, near instant access.
+ * - IRAM is run via On-Chip RAM2, near instant access.
  * - FLASH is run via FlexSPI1, max 256MB.
  * - ERAM is run via FlexSPI2, max 240MB.
  */
@@ -28,19 +28,19 @@ MEMORY
 {
 	ITCM (X):  ORIGIN = @BOARD_ITCM@, LENGTH = @BOARD_ITCM_SIZE@
 	DTCM (RW):  ORIGIN = @BOARD_DTCM@, LENGTH = @BOARD_DTCM_SIZE@
-	SRAM (RWX):  ORIGIN = @BOARD_SRAM@, LENGTH = @BOARD_SRAM_SIZE@
-	FLASH (RWX): ORIGIN = @BOARD_FLASH@, LENGTH = @BOARD_FLASH_SIZE@
+	IRAM (RWX):  ORIGIN = @BOARD_IRAM@, LENGTH = @BOARD_IRAM_SIZE@
+	FLASH (RWX): ORIGIN = @BOARD_FLASH@, LENGTH = @BOARD_FLASH_SIZE_LINK@
 	ERAM (RWX):  ORIGIN = @BOARD_ERAM@, LENGTH = @BOARD_ERAM_SIZE@
 }
 
-ENTRY(_start)
+ENTRY(__main)
 
 SECTIONS
 {
-	.flash.headers : ALIGN(8) {
+	.flash.headers (TYPE = SHT_PROGBITS) : ALIGN(32) {
 		. = ORIGIN(FLASH);
 		__flash_start = .;
-
+		
 		KEEP(*(.flashLoader))
 
 		/* Image Vector Table
@@ -52,256 +52,264 @@ SECTIONS
 		 * - SD/MMC/...: 0x400 (1KB, loads 4KB only)
 		 * - FlexSPI NAND: 0x400 (1KB, loads 4KB only)
 		 */
-		FILL(0xFFFFFFFF) : . = ORIGIN(FLASH) + 4K;	/* . = ALIGN(256); */
+		FILL(0x00000000) : . = ORIGIN(FLASH) + 4K;	/* . = ALIGN(256); */
 		KEEP(*(.imageVectorTable))
 
 		/* Boot Data
 		 * - Just 12 bytes long, so it fits here.
 		 */
-		FILL(0xFFFFFFFF) : . = ALIGN(16);
+		FILL(0x00000000) : . = ALIGN(16);
 		KEEP(*(.bootData))
 
 		/* Device Configuration Data
 		 * - Mostly just used to do pre-boot initialization for jumping into code itself.
 		 */
-		FILL(0xFFFFFFFF) : . = ALIGN(16);
-		KEEP(*(.dcd))
+		FILL(0x00000000) : . = ALIGN(16);
+		KEEP(*(SORT_BY_NAME(.dcd)))
 
 		/* Interrupt Vector Table
-		 * - Must be 256 byte aligned.
+		 * - Must be aligned to 128 bytes, due to CM7_INIT_VTOR limitations.
 		 * - We want this to be as early in the Flash as possible.
 		 *   - 968 bytes long, so it fits between here and FlexSPI NOR Flash.
 		 *   - Does not fit between flashLoader and imageVectorTable for SD/MMC or NAND boot.
 		 *   - Just move it to be after imageVectorTable and bootData, filling out the remaining 4K that are loaded anyway.
 		 * - Not documented at all? Is relatively easy to figure out anyway.
 		 */
-		FILL(0xFFFFFFFF) : . = ALIGN(256);
+		FILL(0x00000000) : . = ALIGN(128);
 		KEEP(*(.interruptVectorTable))
-	} >FLASH =0x00000000
+	} >FLASH =0xFFFFFFFF
 
-	.flash.code : ALIGN(8) {
+	.flash.code : ALIGN(4K) {
 		FLAGS(SHF_EXECINSTR | SHF_LINK_ORDER);
 
-		KEEP(*(.text._start))
 		*(.flashCode)
-	} >FLASH =0x00000000
+	} >FLASH =0xFFFFFFFF
 
-	.flash.data : ALIGN(8) {
-		*(SORT_BY_ALIGNMENT(SORT_BY_NAME(.flashData)))
-	} >FLASH =0x00000000
+	.flash.preInit (TYPE=SHT_INIT_ARRAY) : ALIGN(32) {
+		FLAGS(SHF_EXECINSTR | SHF_LINK_ORDER);
 
-	.flash.tbss (NOLOAD) : ALIGN(8) {
-		PROVIDE_HIDDEN(__tbss_start = .);
-		*(.tbss)
-		*(.tbss.*)
-		*(.gnu.linkonce.tb.*)
-		*(.tcommon)
-		PROVIDE_HIDDEN(__tbss_end = .);
-	} >FLASH =0x00000000
-	PROVIDE_HIDDEN(__tbss_start = ADDR(.tbss));
-	PROVIDE_HIDDEN(__tbss_length = SIZEOF(.tbss));
+		PROVIDE_HIDDEN(__preinit_array_start = .);
+		*(.preinit_array.*)
+		*(.preinit_array)
+		PROVIDE_HIDDEN(__preinit_array_end = .);
+	} >FLASH =0xFFFFFFFF
 
-	.flash.bss (NOLOAD) : ALIGN(8) {
-		PROVIDE_HIDDEN(__bss_start = .);
-		*(.sbss*)
-		*(.gnu.linkonce.sb.*)
-		*(.bss .bss.*)
-		*(.gnu.linkonce.b.*)
-		*(COMMON)
-		PROVIDE_HIDDEN(__bss_end = .);
-	} >FLASH =0x00000000
-	PROVIDE_HIDDEN(__bss_start = ADDR(.bss));
-	PROVIDE_HIDDEN(__bss_length = SIZEOF(.bss));
+	.flash.init (TYPE=SHT_INIT_ARRAY) : ALIGN(32) {
+		FLAGS(SHF_EXECINSTR | SHF_LINK_ORDER);
 
-	.flash.eh_frame_hdr : ALIGN(8) {
+		PROVIDE_HIDDEN(__init_array_start = .);
+		*(.init_array.*)
+		*(.init_array)
+		PROVIDE_HIDDEN(__init_array_end = .);
+
+		KEEP(*(.init))
+	} >FLASH =0xFFFFFFFF
+
+	.flash.fini (TYPE=SHT_FINI_ARRAY) : ALIGN(32) {
+		PROVIDE_HIDDEN(__fini_array_start = .);
+		*(.fini_array.*)
+		*(.fini_array)
+		PROVIDE_HIDDEN(__fini_array_end = .);
+
+		KEEP(*(.fini))
+	} >FLASH =0xFFFFFFFF
+
+	.flash.eh_frame_hdr : ALIGN(32) {
 		PROVIDE_HIDDEN(__eh_frame_hdr_start = .);
 		*(.eh_frame_hdr)
 		PROVIDE_HIDDEN(__eh_frame_hdr_end = .);
-	} >FLASH =0x00000000
-	.flash.eh_frame : ALIGN(8) {
+	} >FLASH =0xFFFFFFFF
+
+	.flash.eh_frame : ALIGN(32) {
 		PROVIDE_HIDDEN(__eh_frame_start = .);
 		*(.eh_frame)
 		PROVIDE_HIDDEN(__eh_frame_end = .);
-	} >FLASH =0x00000000
-	PROVIDE_HIDDEN(__eh_frame_start = ADDR(.eh_frame));
-	PROVIDE_HIDDEN(__eh_frame_length = SIZEOF(.eh_frame));
+	} >FLASH =0xFFFFFFFF
 
-	.flash.exidx (TYPE=SHT_NOBITS) : ALIGN(8) {
+	.flash.exidx (TYPE=SHT_NOBITS) : ALIGN(32) {
 		FLAGS(SHF_EXECINSTR | SHF_LINK_ORDER);
 
 		PROVIDE_HIDDEN(__exidx_start = .);
 		*(.ARM.exidx* .ARM.extab* .gnu.linkonce.armexidx*)
 		PROVIDE_HIDDEN(__exidx_end = .);
-	} >FLASH =0x00000000
+	} >FLASH =0xFFFFFFFF
 
-	.flash.itcm (TYPE=SHT_NOBITS) : {
-		PROVIDE_HIDDEN(__itcmStart = .);
+	.flash.data : ALIGN(4K) {
+		*(SORT_BY_ALIGNMENT(SORT_BY_NAME(.flashData)))
+	} >FLASH =0xFFFFFFFF
 
+	/** Tightly Coupled Memory
+	 * We can significantly speed up memory access using FlexRAM configuration,
+	 * however we can only do this with the first 512K of memory. 
+	 *
+	 * We use this area for fast code, fast data, and the stack. The stack will
+	 * be at the end of the DTCM area, growing up. It therefore has the possibility
+	 * of smashing into data and code, which is unfortunate - but mostly 
+	 * unavoidable.
+	 */
+	.itcm : ALIGN(32) {
+		FLAGS(SHF_EXECINSTR | SHF_LINK_ORDER);
+
+		PROVIDE_HIDDEN(__itcm_start = .);
 		. = . + 32; /* Use Memory Protection Unit to trap a null pointer dereference. */
-	} >ITCM AT>FLASH =0x00000000
 
-	.flash.itcm.preInit (TYPE=SHT_INIT_ARRAY) : ALIGN(8) {
-		FLAGS(SHF_EXECINSTR | SHF_LINK_ORDER);
-
-		PROVIDE_HIDDEN(__preinit_array_start = .);
-		KEEP (*(.preinit_array.*))
-		KEEP (*(.preinit_array))
-		PROVIDE_HIDDEN(__preinit_array_end = .);
-	} >ITCM AT>FLASH =0x00000000
-
-	.flash.itcm.init (TYPE=SHT_INIT_ARRAY) : ALIGN(8) {
-		FLAGS(SHF_EXECINSTR | SHF_LINK_ORDER);
-
-		PROVIDE_HIDDEN(__init_array_start = .);
-		KEEP (*(SORT(.init_array.*)))
-		KEEP (*(.init_array))
-		PROVIDE_HIDDEN(__init_array_end = .);
-
-		KEEP(*(.init))
-	} >ITCM AT>FLASH =0x00000000
-
-	.flash.itcm.fini (TYPE=SHT_FINI_ARRAY) : ALIGN(8) {
-		PROVIDE_HIDDEN(__fini_array_start = .);
-		KEEP (*(SORT(.fini_array.*)))
-		KEEP (*(.fini_array))
-		PROVIDE_HIDDEN(__fini_array_end = .);
-
-		KEEP(*(.fini))
-	} >ITCM AT>FLASH =0x00000000
-
-	.flash.itcm.fastCode : ALIGN(8) {
-		FLAGS(SHF_EXECINSTR | SHF_LINK_ORDER);
-		*(__lcxx_override);
-
-		*(.fastCode)
 		*(.text*)
+		*(.fastCode)
 
-		PROVIDE_HIDDEN(__itcmEnd = .);
-	} >ITCM AT>FLASH =0x00000000
-	PROVIDE_HIDDEN(__fast_code_length = __itcmEnd - __itcmStart);
-	PROVIDE_HIDDEN(__fast_code_address = LOADADDR(.flash.itcm));
+		PROVIDE_HIDDEN(__itcm_end = .);
+	} >ITCM AT>FLASH =0xFFFFFFFF
+	PROVIDE_HIDDEN(__itcm_addr = LOADADDR(.itcm));
+	PROVIDE_HIDDEN(__itcm_length = (__itcm_end - __itcm_start));
+	PROVIDE_HIDDEN(__itcm_block_count = (__itcm_length + 0x7FFF) >> 15);
 
-	.flash.dtcm : ALIGN(8) {
-		PROVIDE_HIDDEN(__dtcmStart = .);
-	} >DTCM AT>FLASH =0x00000000
+	.dtcm : ALIGN(32) {
+		PROVIDE_HIDDEN(__dtcm_start = .);
+	} >DTCM AT>FLASH =0xFFFFFFFF
 
-	.flash.dtcm.fastData : ALIGN(8) {
-		*(SORT_BY_ALIGNMENT(SORT_BY_NAME(.rodata*)))
-		PROVIDE_HIDDEN(__dtcm_rodata = .);
+	.dtcm.stack (NOLOAD) : ALIGN(32) {
+		/* Stack Location
+		 * - PUSH is an alias for STMDB, POP is an alias for LDMIA
+		 * - PUSH automatically decrements SP by 4 for every register, so no manual adjustment needed.
+		 * - Stack grows "down" by default, so we should place it at the start for safety.
+		 * - Limited in size by compile-time options, but still better than stack smashing our stuff.
+		 */
+		PROVIDE_HIDDEN(__stack_end = .);
+		. = . + @TEENSY_STACK_SIZE@;
+		PROVIDE_HIDDEN(__stack_start = .);
+	} >DTCM =0xFFFFFFFF
 
-		*(SORT_BY_ALIGNMENT(SORT_BY_NAME(.data*)))
-		*(.data .data.*)
-		*(.sdata .sdata.* .sdata2.*)
-		*(.gnu.linkonce.s.*)
-		*(.gnu.linkonce.d.*)
-		*(.tdata .tdata.* .gnu.linkonce.td.*)
-	} >DTCM AT>FLASH =0x00000000
+	.dtcm.data : ALIGN(32) {
+		/** Initialized Data (Global or Thread-Local)
+		 */
+		PROVIDE_HIDDEN(__dtcm_data_start = .);
+		// Global Data
+		*(.data .data.* .gnu.linkonce.d.*)
+		// Thread-Local Data
+		*(.tdata .tdata.* .tdata1 .tdata1.* .gnu.linkonce.td.*)
 
-	.flash.dtcm.dtcmEnd : {
-		PROVIDE_HIDDEN(__dtcmEnd = .);
-	} >DTCM AT>FLASH =0x00000000
-	PROVIDE_HIDDEN(__fast_data_length = __dtcmEnd - __dtcmStart);
-	PROVIDE_HIDDEN(__fast_data_address = LOADADDR(.flash.dtcm));
+		// Shorter Address Data (not used?)
+		*(.sdata .sdata.* .sdata2.* .gnu.linkonce.s.*)
 
-	.flash.sram.code : ALIGN(8) {
-		FLAGS(SHF_EXECINSTR | SHF_LINK_ORDER);
+		/** Fast Data (manually marked)
+		 */
+		*(.fastData)
+		PROVIDE_HIDDEN(__dtcm_data_end = .);
+	} >DTCM AT>FLASH =0xFFFFFFFF
+	PROVIDE_HIDDEN(__dtcm_data_addr = LOADADDR(.dtcm.data));
+	PROVIDE_HIDDEN(__dtcm_data_length = (__dtcm_data_end - __dtcm_data_start));
+	
+	/** Uninitialized Data (Shorter Addressing)
+	 */
+	.dtcm.sbss (NOLOAD) : ALIGN(32) {
+		PROVIDE_HIDDEN(__bss_start = .);
+		*(.sbss*)
+		*(.gnu.linkonce.sb.*)
+		PROVIDE_HIDDEN(__bss_end = .);
+	} >DTCM AT>FLASH =0xFFFFFFFF
 
-		PROVIDE_HIDDEN(__board_iram = .);
-		*(.iramCode);
-	} >SRAM AT>FLASH =0x00000000
+	/** Uninitialized Data (Global)
+	 */
+	.dtcm.bss (NOLOAD) : ALIGN(32) {
+		PROVIDE_HIDDEN(__bss_start = .);
+		// Shorter Address Data (not used?)
+		//*(.sbss*)
+		//*(.gnu.linkonce.sb.*)
 
-	.flash.sram.data : ALIGN(8) {
-		*(SORT_BY_ALIGNMENT(SORT_BY_NAME(.iramData)));
+		// Global Data
+		*(.bss .bss.*)
+		*(.gnu.linkonce.b.*)
+		*(COMMON)
+		PROVIDE_HIDDEN(__bss_end = .);
+	} >DTCM AT>FLASH =0xFFFFFFFF
 
-		. = ALIGN(8);
-		PROVIDE_HIDDEN(__board_iram_free = .);
-	} >SRAM AT>FLASH =0x00000000
-	PROVIDE_HIDDEN(__board_iram_size = @BOARD_SRAM_SIZE@);
-	PROVIDE_HIDDEN(__board_iram_address = LOADADDR(.flash.sram.code));
-	PROVIDE_HIDDEN(__board_iram_length = __board_iram_free - __board_iram);
+	/** Uninitialized Data (Thread-Local)
+	 */
+	.dtcm.tbss (NOLOAD) : ALIGN(32) {
+		PROVIDE_HIDDEN(__tbss_start = .);
+		// Thread-Local Data
+		*(.tbss .tbss.*)
+		*(.gnu.linkonce.tb.*)
+		*(.tcommon)
+		PROVIDE_HIDDEN(__tbss_end = .);
+	} >DTCM AT>FLASH =0xFFFFFFFF
 
-	.flash.eram.code : ALIGN(8) {
-		FLAGS(SHF_EXECINSTR | SHF_LINK_ORDER);
-
-		PROVIDE_HIDDEN(__board_eram = .);
-		*(.eramCode);
-	} >ERAM AT>FLASH =0x00000000
-
-	.flash.eram.data : ALIGN(8) {
-		*(SORT_BY_ALIGNMENT(SORT_BY_NAME(.eramData)));
-
-		. = ALIGN(8);
-		PROVIDE_HIDDEN(__board_eram_free = .);
-	} >ERAM AT>FLASH =0x00000000
-	PROVIDE_HIDDEN(__board_eram_size = @BOARD_ERAM_SIZE@);
-	PROVIDE_HIDDEN(__board_eram_address = LOADADDR(.flash.eram.code));
-	PROVIDE_HIDDEN(__board_eram_length = __board_eram_free - __board_eram);
-
-	.flash : {
-		PROVIDE_HIDDEN(__flashImageEnd = .);
-		PROVIDE_HIDDEN(__flash_length = __flashImageEnd - __flash_start);
-	} >FLASH =0x00000000
+	.dtcm : {
+		PROVIDE_HIDDEN(__dtcm_end = .);
+	} >DTCM =0xFFFFFFFF
 
 	/* Calculate the Intruction/Data Tightly Coupled Memory split.
 	 * - The granularity of this is only 32KiB (512K / 16).
 	 * - While DTCM and ITCM are clear, it isn't clear what OCRAM configuration is for.
 	 * - We can also mark things as unused, but really we just want the extra DTCM area for stack.
 	 */
-	PROVIDE_HIDDEN(__itcm_block_count = (__fast_code_length + 0x7FFF) >>15);
 	PROVIDE_HIDDEN(__flexram_bank_config = 0xAAAAAAAA | ((1 << __itcm_block_count * 2) - 1));
 
-	/* Pass further data for ITCM/DTCM MPU initialization.
-	 * - Can use this to trap invalid calls, if there are any.
-	 * - Aside from that, not really useful.
+	/** 2nd half of memory, usually used for DMA only. 
+	 * Significantly slower than the first half, and unfortunately not continuous
+	 * with DTCM, so we can't seamlessly traverse the memory boundary. We'll be
+	 * using this for less important information that doesn't need to be written to
+	 * often, but still may be read often - the built-in cache in the chip should
+	 * be able to offset this. 
 	 */
-	PROVIDE_HIDDEN(__itcm_start = ORIGIN(ITCM));
-	PROVIDE_HIDDEN(__itcm_length = (__itcm_block_count << 15));
-	PROVIDE_HIDDEN(__dtcm_start = ORIGIN(DTCM));
-	PROVIDE_HIDDEN(__dtcm_length = @BOARD_DTCM_SIZE@ - __itcm_length);
+	.iram (TYPE = SHT_PROGBITS) : ALIGN(32) {
+		PROVIDE_HIDDEN(__iram_start = .);
+	} >IRAM AT>FLASH =0xFFFFFFFF
+	PROVIDE_HIDDEN(__iram_addr = LOADADDR(.iram));
 
-	/* Calculate the location of the stack.
-	 * - EABI stack grows "up" not down.
-	 * - Must offset by 4, as [sp] by default should be a valid address.
+	.iram.code : ALIGN(32) {
+		FLAGS(SHF_EXECINSTR | SHF_LINK_ORDER);
+
+		*(__lcxx_override);
+		*(.iramCode);
+		PROVIDE_HIDDEN(__iram_code_end = .);
+	} >IRAM AT>FLASH =0xFFFFFFFF
+
+	.iram.data : ALIGN(32) {
+		*(.rodata*)
+		*(.iramData);
+
+		. = ALIGN(256);
+		//PROVIDE_HIDDEN(__iram_end = .);
+	} >IRAM AT>FLASH =0xFFFFFFFF
+
+	.iram : {
+		PROVIDE_HIDDEN(__iram_end = .);
+	} >IRAM =0xFFFFFFFF
+	PROVIDE_HIDDEN(__iram_length = __iram_end - __iram_start);
+
+	/** Heap Location
+	 * We place the heap into the 2nd half of the on-board memory, which isn't
+	 * accessed via DTCM. 
 	 */
-	PROVIDE_HIDDEN(__stack_start = ORIGIN(DTCM) + __dtcm_length);
-	
-	/* Calculate the location of the stack.
-	 * - EABI heap grows "down" (into stack).
-	 */
-	PROVIDE_HIDDEN(__heap_start = __dtcm_start);
-	PROVIDE_HIDDEN(__heap_end = __heap_start + __itcm_length);
+	.iram.heap (NOLOAD) : ALIGN(32) {
+		PROVIDE_HIDDEN(__heap_start = .);
+	} >IRAM =0xFFFFFFFF
+	PROVIDE_HIDDEN(__heap_end = (@BOARD_IRAM@ + @BOARD_IRAM_SIZE@) - __iram_length);
 
-/*
-	.symtab : {
-		*(.symtab)
-	}
+	.eram : ALIGN(32) {
+		PROVIDE_HIDDEN(__eram_start = .);
+	} >ERAM AT>FLASH =0xFFFFFFFF
+	PROVIDE_HIDDEN(__eram_addr = LOADADDR(.eram));
 
-	.strtab : {
-		*(.shstrtab)
-		*(.strtab)
-	}
+	.eram.code : ALIGN(32) {
+		FLAGS(SHF_EXECINSTR | SHF_LINK_ORDER);
 
-	.other : {
-		*(.comment)
-		*(.debug_info)
-		*(.debug_abbrev)
-		*(.debug_line)
-		*(.debug_frame)
-		*(.debug_str)
-		*(.debug_loclists)
-		*(.debug_str_offsets)
-		*(.debug_addr)
-		*(.debug_line_str)
-		*(.debug_rnglists)
-		*(.debug_aranges)
-		*(.environ)
-	}
-	
-	.ARM.attributes : {
-		*(.ARM.attributes)
-	}
-*/
+		*(.eramCode);
+	} >ERAM AT>FLASH =0xFFFFFFFF
 
-	/DISCARD/ :{
-	}
+	.eram.data : ALIGN(32) {
+		*(SORT_BY_ALIGNMENT(SORT_BY_NAME(.eramData)));
+
+		. = ALIGN(8);
+	} >ERAM AT>FLASH =0xFFFFFFFF
+
+	.eram : {
+		PROVIDE_HIDDEN(__eram_end = .);
+	} >ERAM =0xFFFFFFFF
+	PROVIDE_HIDDEN(__eram_length = __eram_end - __eram_start);
+
+	.flash (TYPE = SHT_NOBITS) : {
+		PROVIDE_HIDDEN(__flash_end = .);
+		PROVIDE_HIDDEN(__flash_length = __flash_end - __flash_start);
+	} >FLASH =0xFFFFFFFF
 };

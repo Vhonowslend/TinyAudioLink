@@ -186,62 +186,99 @@ function(configure TARGET)
 		CXX_EXTENSIONS OFF
 	)
 	target_compile_options(${TARGET}
-		PUBLIC
-			"-fmodules"
+		PRIVATE
+			# C++: Prefer Copy without temporary objects
+			"$<$<COMPILE_LANGUAGE:CXX>:-felide-constructors>"
+			# Don't bother with frame pointers
+			"$<$<COMPILE_LANGUAGE:CXX>:-fomit-frame-pointer>"
+			# Experimental support for C++ Modules.
+			"$<$<COMPILE_LANGUAGE:CXX>:-fmodules>"
+			# Default to hiding everything. Sometimes results in smaller binaries
+			"$<$<COMPILE_LANGUAGE:CXX>:-fvisibility=hidden>"
 	)
-	target_link_libraries(${TARGET}
-		PUBLIC
-			"m" # C Math
-			"c++" # C++ Stuff
+	target_link_options(${TARGET}
+		PRIVATE
+			# Tell the linker to strip whatever is not needed at the end.
+			"$<$<CONFIG:Release,MinSizeRel>:-Xlinker>" "$<$<CONFIG:Release,MinSizeRel>:--strip-all>"
 	)
 	if((CMAKE_CXX_COMPILER_ID STREQUAL "Clang") OR (CMAKE_CXX_COMPILER_ID STREQUAL "AppleClang"))
 		# Prefer Thin-LTO over Whole-LTO (it's faster, and seems to be better now too).
 		foreach(CONFIG IN LISTS CMAKE_CONFIGURATION_TYPES)
 			get_target_property(LTO ${TARGET} INTERPROCEDURAL_OPTIMIZATION_${CONFIG})
 			if(LTO)
-				target_compile_options(${TARGET} PUBLIC "$<$<CONFIG:${CONFIG}>:-flto=thin>")
-				target_link_options(${TARGET} PUBLIC "$<$<CONFIG:${CONFIG}>:-flto=thin>")
+				target_compile_options(${TARGET} PRIVATE "$<$<CONFIG:${CONFIG}>:-flto=thin>")
+				target_link_options(${TARGET} PRIVATE "$<$<CONFIG:${CONFIG}>:-flto=thin>")
 			endif()
 		endforeach()
-		get_target_property(LTO ${TARGET} INTERPROCEDURAL_OPTIMIZATION)
-		if(LTO)
-			target_compile_options(${TARGET} PUBLIC "-flto=thin")
-			target_link_options(${TARGET} PUBLIC "-flto=thin")
-		endif()
 	endif()
 	if(NOT ENABLE_EXCEPTIONS)
 		target_compile_options(${TARGET}
-			PUBLIC
-				"-fno-rtti"
-				"-fno-exceptions"
+			PRIVATE
+				# C++: No Run-Time Type Information
+				"$<$<COMPILE_LANGUAGE:CXX>:-fno-rtti>"
+				"$<$<COMPILE_LANGUAGE:CXX>:-fno-exceptions>"
+		)
+	else()
+		target_compile_options(${TARGET}
+			PRIVATE
+				# C++: Run-Time Type Information
+				"$<$<COMPILE_LANGUAGE:CXX>:-frtti>"
+				"$<$<COMPILE_LANGUAGE:CXX>:-fexceptions>"
 		)
 	endif()
+
+	# Add Source and Include Files
+	file(GLOB_RECURSE _INCLUDE FOLLOW_SYMLINKS CONFIGURE_DEPENDS "${${TARGET}_SOURCE_DIR}/include/*")
+	source_group(TREE "${${TARGET}_SOURCE_DIR}/include" PREFIX "Public" FILES ${_INCLUDE})
+	file(GLOB_RECURSE _SOURCE FOLLOW_SYMLINKS CONFIGURE_DEPENDS "${${TARGET}_SOURCE_DIR}/source/*")
+	source_group(TREE "${${TARGET}_SOURCE_DIR}/source" PREFIX "Private" FILES ${_SOURCE})
+	file(GLOB_RECURSE _INCLUDEG FOLLOW_SYMLINKS CONFIGURE_DEPENDS "${${TARGET}_BINARY_DIR}/include/*")
+	source_group(TREE "${${TARGET}_BINARY_DIR}/include" PREFIX "Public" FILES ${_INCLUDEG})
+	file(GLOB_RECURSE _SOURCEG FOLLOW_SYMLINKS CONFIGURE_DEPENDS "${${TARGET}_BINARY_DIR}/source/*")
+	source_group(TREE "${${TARGET}_BINARY_DIR}/source" PREFIX "Private" FILES ${_SOURCEG})
+	target_sources(${TARGET}
+		PRIVATE ${_SOURCE} ${_SOURCEG}
+		PUBLIC ${_INCLUDE} ${_INCLUDEG}
+	)
+	target_include_directories(${TARGET}
+		PRIVATE
+			"${PROJECT_SOURCE_DIR}/source"
+			"${PROJECT_BINARY_DIR}/source"
+		PUBLIC
+			"${PROJECT_SOURCE_DIR}/include"
+			"${PROJECT_BINARY_DIR}/include"
+	)
 endfunction()
 
 function(link TARGET LINK_TARGET)
-	target_sources(${TARGET} PUBLIC $<TARGET_OBJECTS:${LINK_TARGET}>)
-	target_include_directories(${TARGET} PUBLIC
-		"$<TARGET_PROPERTY:${LINK_TARGET},INTERFACE_INCLUDE_DIRECTORIES>"
-	)
-	target_link_libraries(${TARGET} PUBLIC
-		${LINK_TARGET}
-#		"$<TARGET_PROPERTY:${LINK_TARGET},INTERFACE_LINK_LIBRARIES>"
-	)
-	target_link_options(${TARGET} PUBLIC
-		"$<TARGET_PROPERTY:${LINK_TARGET},INTERFACE_LINK_OPTIONS>"
-	)
-	target_compile_options(${TARGET} PUBLIC
-		"$<TARGET_PROPERTY:${LINK_TARGET},INTERFACE_COMPILE_OPTIONS>"
-	)
+	target_link_libraries(${TARGET}
+		PUBLIC
+			${LINK_TARGET}
+	)	
+	# Supposedly no longer needed as of CMake 3.12 or so, but does not work as expected on 3.30. GG
+#	target_sources(${TARGET} PUBLIC $<TARGET_OBJECTS:${LINK_TARGET}>)
+#	target_include_directories(${TARGET} PUBLIC
+#		"$<TARGET_PROPERTY:${LINK_TARGET},INTERFACE_INCLUDE_DIRECTORIES>"
+#	)
+#	target_link_options(${TARGET} PUBLIC
+#		"$<TARGET_PROPERTY:${LINK_TARGET},INTERFACE_LINK_OPTIONS>"
+#	)
+#	target_compile_options(${TARGET} PUBLIC
+#		"$<TARGET_PROPERTY:${LINK_TARGET},INTERFACE_COMPILE_OPTIONS>"
+#	)
 endfunction()
 
 function(postprocess TARGET)
-	# Strip unnecessary crap that isn't automatically removed by LTO.
+	# Post-Processing for debugging Assembly.
+	set_property(
+		TARGET ${TARGET}
+		APPEND PROPERTY ADDITIONAL_CLEAN_FILES "$<TARGET_FILE_DIR:${TARGET}>/$<TARGET_FILE_BASE_NAME:${TARGET}>.asm"
+	)
 	add_custom_command(
 		TARGET ${TARGET}
 		POST_BUILD
-		COMMAND "${CMAKE_STRIP}"
-		ARGS "--strip-unneeded" "$<TARGET_FILE:${TARGET}>"
+		COMMAND "${CMAKE_OBJDUMP}"
+		ARGS --disassemble-all --disassemble-zeroes --source --line-numbers --symbolize-operands "$<TARGET_FILE:${TARGET}>" > "$<TARGET_FILE_DIR:${TARGET}>/$<TARGET_FILE_BASE_NAME:${TARGET}>.asm"
 	)
 
 	# Post-processing so it can actually be run.
@@ -253,20 +290,9 @@ function(postprocess TARGET)
 		TARGET ${TARGET}
 		POST_BUILD
 		COMMAND "${CMAKE_OBJCOPY}"
-		ARGS -O ihex "--strip-unneeded" "--regex" "--only-section=\\.flash.*" "$<TARGET_FILE:${TARGET}>" "$<TARGET_FILE_DIR:${TARGET}>/$<TARGET_FILE_BASE_NAME:${TARGET}>.hex"
+		ARGS -O ihex "$<TARGET_FILE:${TARGET}>" "$<TARGET_FILE_DIR:${TARGET}>/$<TARGET_FILE_BASE_NAME:${TARGET}>.hex"
 	)
 
-	# Post-Processing for debugging Assembly.
-	set_property(
-		TARGET ${TARGET}
-		APPEND PROPERTY ADDITIONAL_CLEAN_FILES "$<TARGET_FILE_DIR:${TARGET}>/$<TARGET_FILE_BASE_NAME:${TARGET}>.asm"
-	)
-	add_custom_command(
-		TARGET ${TARGET}
-		POST_BUILD
-		COMMAND "${CMAKE_OBJDUMP}"
-		ARGS --disassemble-all --line-numbers --source --demangle --symbolize-operands "$<TARGET_FILE:${TARGET}>" > "$<TARGET_FILE_DIR:${TARGET}>/$<TARGET_FILE_BASE_NAME:${TARGET}>.asm"
-	)
 endfunction()
 
 ################################################################################
@@ -307,22 +333,16 @@ project(TinyAudioLink
 message(STATUS "Version ${_VERSION_THIN}")
 
 add_executable(${PROJECT_NAME})
-configure(${PROJECT_NAME})
-link(${PROJECT_NAME} ${BOARD_NAME})
-postprocess(${PROJECT_NAME})
 
-file(GLOB_RECURSE _INCLUDE FOLLOW_SYMLINKS CONFIGURE_DEPENDS "include/*")
-source_group(TREE "${CMAKE_CURRENT_SOURCE_DIR}/include" PREFIX "Public" FILES ${_INCLUDE})
-file(GLOB_RECURSE _SOURCE FOLLOW_SYMLINKS CONFIGURE_DEPENDS "source/*")
-source_group(TREE "${CMAKE_CURRENT_SOURCE_DIR}/source" PREFIX "Private" FILES ${_SOURCE})
-target_sources(${PROJECT_NAME}
-	PRIVATE ${_SOURCE}
-	PUBLIC ${_INCLUDE}
+target_link_libraries(${PROJECT_NAME} PUBLIC
+	m
+	c++
 )
-target_include_directories(${PROJECT_NAME}
-	PRIVATE "source"
-	PUBLIC "include"
-)
+link(${PROJECT_NAME} ${BOARD_NAME})
+
+configure(${PROJECT_NAME})
+
+postprocess(${PROJECT_NAME})
 
 # Always do this last, it's order dependent unfortunately.
 generate_compile_commands_json(TARGETS ${PROJECT_NAME})

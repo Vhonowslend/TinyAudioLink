@@ -19,57 +19,36 @@
 #include <endian.h>
 #include "nxp/imxrt1060/bootdata.hpp"
 #include "nxp/imxrt1060/deviceconfigurationdata.hpp"
+#include "nxp/imxrt1060/nvic.hpp"
 #include "nxp/nxp.hpp"
 
-#ifndef USE_TEENSY_IVT
-#include "nxp/imxrt1060/nvic.hpp"
+#ifndef NXP_IVT
+#define NXP_IVT 0x41
 #endif
 
 namespace nxp::imxrt1060 {
-#ifndef USE_TEENSY_IVT
 	/** Image Vector Table 4.0/4.1
 	 * - Mentioned here https://forum.pjrc.com/index.php?threads/teensy-4-imagevectortable-not-matching-the-nxp-format.67562/#post-282356
 	 * - Unclear where that user got the information from, since I could not find this documentation they are talking about.
-	 */
-	struct [[gnu::packed, gnu::aligned(1)]] image_vector_table_t {
-		// 0x00 Header: Tag, Length, Version in one field.
-		nxp::header_t header = {
-			.tag       = 0xD1,
-			.length    = htobe16(sizeof(image_vector_table_t)),
-			.parameter = 0x41,
-		};
-		// 0x04 Entry: Absolute address of the first instruction?
-		nxp::imxrt1060::nvic::interrupt_vector_table_t* ivt = &nxp::imxrt1060::nvic::__interrupt_vector_table;
-		// 0x08 Reserved, must be zero.
-		uint32_t __reserved1 = 0;
-		// 0x0C Device Configuration Data: Absolute address but optional, so it's NULL.
-		nxp::imxrt1060::device_configuration_data::data_t const* dcd = nullptr;
-		// 0x10 Boot Data: Absolute address of the boot data.
-		nxp::imxrt1060::boot_data_t const* bootData = nullptr;
-		// 0x14 Image Vector Table: The address of this structure.
-		nxp::imxrt1060::image_vector_table_t const* self = nullptr;
-		// 0x18 Command Sequence File: See High-Assurance Boot for details. Must be NULL if not performing HAB.
-		void const* csf = nullptr;
-		// 0x1C Reserved, must be zero.
-		uint32_t __reserved2 = 0;
-	}; // 0x20
-	static constexpr std::size_t image_vector_table_sz = 0x20;
-	static_assert(sizeof(image_vector_table_t) == image_vector_table_sz, "Image Vector Table must be 32 bytes long.");
-#else
-	/** Image Vector Table 4.3
+	 ** Image Vector Table 4.3
 	 * - IMXRT1060RM_rev3.pdf: Chapter 9, Program image, Image and Vector Table and Boot Data
 	 * - IMXRT1060RM_rev1_Processor_Manual.pdf: 8.7.1
 	 */
 	struct [[gnu::packed, gnu::aligned(1)]] image_vector_table_t {
 		// 0x00 Header: Tag, Length, Version in one field.
 		nxp::header_t header = {
-			.tag    = 0xD1,
-			.length = htobe16(sizeof(image_vector_table_t)),
-			// Teensy 4.x ships with a different version (4.3) that jumps straight to code.
-			.parameter = 0x43,
+			.tag       = 0xD1,
+			.length    = htobe16(sizeof(nxp::imxrt1060::image_vector_table_t)),
+			.parameter = NXP_IVT,
 		};
-		// 0x04 Entry: Absolute address of the first instruction?
+#if NXP_IVT == 0x43
+		// Teensy 4.x ships with a different version (4.3) that jumps straight to code.
+		// 0x04 Entry: Absolute address of the first function
 		void (*entryPoint)() = nullptr;
+#else
+		// 0x04 Entry: Absolute address of the interrupt vector table
+		nxp::imxrt1060::nvic::interrupt_vector_table_t* ivt = nullptr;
+#endif
 		// 0x08 Reserved, must be zero.
 		uint32_t __reserved1 = 0;
 		// 0x0C Device Configuration Data: Absolute address but optional, so it's NULL.
@@ -83,9 +62,7 @@ namespace nxp::imxrt1060 {
 		// 0x1C Reserved, must be zero.
 		uint32_t __reserved2 = 0;
 	}; // 0x20
-	static constexpr std::size_t image_vector_table_sz = 0x20;
-	static_assert(sizeof(image_vector_table_t) == image_vector_table_sz, "Image Vector Table must be 32 bytes long.");
-#endif
-
-	extern const image_vector_table_t __image_vector_table;
+	static_assert(sizeof(nxp::imxrt1060::image_vector_table_t) == 32, "Image Vector Table must be 32 bytes long.");
 } // namespace nxp::imxrt1060
+
+extern const nxp::imxrt1060::image_vector_table_t __image_vector_table;

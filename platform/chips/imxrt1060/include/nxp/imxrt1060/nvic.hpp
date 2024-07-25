@@ -1,37 +1,46 @@
-// TinyAudioLink - Seamlessly transfer Audio between USB capable devices
-// Copyright (C) 2019 Michael Fabian 'Xaymar' Dirks
-//
-// This program is free software: you can redistribute it and/or modify
-// it under the terms of the GNU General Public License as published by
-// the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version.
-//
-// This program is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-// GNU General Public License for more details.
-//
-// You should have received a copy of the GNU General Public License
-// along with this program.  If not, see <http://www.gnu.org/licenses/>.
-
 #pragma once
 #include <cinttypes>
 #include <cstddef>
 
-// This is critical, so ensure it's byte aligned.
-#pragma pack(push, 1)
-
 namespace nxp::imxrt1060::nvic {
 	typedef void (*interrupt_function_t)();
 
-	struct interrupt_vector_table_t {
-		std::size_t*         initialStackPointer;
-		interrupt_function_t reset;
-		interrupt_function_t interrupts[240] = {0};
+	enum class interrupt_t : uint32_t {
+		RESET                  = 1,
+		NON_MASKABLE_INTERRUPT = 2,
+		HARD_FAULT             = 3,
+		MEM_MANAGE             = 4,
+		BUS_FAULT              = 4,
+		USAGE_FAULT            = 5,
+		SERVICE_CALL           = 11,
+		DEBUG_MONITOR          = 12,
+		ASYNC_SERVICE_CALL     = 14,
+		PENDING_SERVICE_CALL   = 14,
+		SYSTICK                = 15,
+		EXTERNAL               = 16,
+		EXTERNAL_MAX           = 241,
 	};
-	extern interrupt_vector_table_t __interrupt_vector_table;
 
-	void initialize() noexcept;
+	struct [[gnu::packed, gnu::aligned(1)]] interrupt_vector_table_t {
+		const void* initial_stack_pointer;
+		union {
+			interrupt_function_t interrupts[241] = {0};
+			[[gnu::packed, gnu::aligned(1)]] struct {
+				interrupt_function_t reset;
+				interrupt_function_t non_maskable_interrupt;
+				interrupt_function_t hard_fault;
+				interrupt_function_t mem_manage;
+				interrupt_function_t bus_fault;
+				interrupt_function_t usage_fault;
+				interrupt_function_t __reserved0[3];
+				interrupt_function_t svcall;
+				interrupt_function_t debug_monitor;
+				interrupt_function_t __reserved1;
+				interrupt_function_t pendsv;
+				interrupt_function_t systick;
+				interrupt_function_t external[227];
+			} named;
+		};
+	};
+	static_assert(sizeof(interrupt_vector_table_t) == 968, "Interrupt Vector Table must be 968 bytes long.");
 } // namespace nxp::imxrt1060::nvic
-
-#pragma pack(pop)
