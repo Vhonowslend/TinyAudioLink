@@ -67,15 +67,18 @@ SECTIONS
 		FILL(0x00000000) : . = ALIGN(16);
 		KEEP(*(SORT_BY_NAME(.dcd)))
 
-		/* Interrupt Vector Table
-		 * - Must be aligned to 128 bytes, due to CM7_INIT_VTOR limitations.
+		/** Interrupt Vector Table
 		 * - We want this to be as early in the Flash as possible.
 		 *   - 968 bytes long, so it fits between here and FlexSPI NOR Flash.
 		 *   - Does not fit between flashLoader and imageVectorTable for SD/MMC or NAND boot.
 		 *   - Just move it to be after imageVectorTable and bootData, filling out the remaining 4K that are loaded anyway.
-		 * - Not documented at all? Is relatively easy to figure out anyway.
+		 * - Documentation: The Vector table must be anturally aligned to a 
+		 *   power of two whose alignment value is greater than or equal to 
+		 *   (sizeof(void*) * numInterruptsSupported), with a minimum of 128
+		 *   bytes.
+		 * - Therefore, align to 1K boundary.
 		 */
-		FILL(0x00000000) : . = ALIGN(128);
+		FILL(0x00000000) : . = ALIGN(1K);
 		KEEP(*(.interruptVectorTable))
 	} >FLASH =0xFFFFFFFF
 
