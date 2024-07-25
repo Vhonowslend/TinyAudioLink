@@ -127,5 +127,5 @@ DisableFormat: false
 FixNamespaceComments: true
 #ForEachMacros: ''
 KeepEmptyLinesAtTheStartOfBlocks: false
-ReflowComments: true
+ReflowComments: false
 SortUsingDeclarations: true

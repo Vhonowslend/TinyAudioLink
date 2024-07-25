@@ -55,7 +55,7 @@ void __main(void) noexcept
 	asm volatile(
 		"bic %[cm7_init_vtor], %[cm7_init_vtor_bic];"
 		"str %[cm7_init_vtor], %[vtor];" // Accepts the same value as GPR16, but ignores the lower 7 bits, so it's
-										 // better here.
+		// better here.
 		"orr %[cm7_init_vtor], %[cm7_init_vtor], %[flexram_bank_cfg_sel];"
 		"str %[cm7_init_vtor], %[gpr16];"
 		: [gpr16] "=g"(__IMXRT1060_IOMUXC_GPR16), [vtor] "=g"(__CORTEXM7_VTOR)
@@ -158,7 +158,7 @@ void _main(void) noexcept
 			extern void (*__preinit_array_start[])(void) __attribute__((weak));
 			extern void (*__preinit_array_end[])(void) __attribute__((weak));
 			for (size_t edx = __preinit_array_end - __preinit_array_start, idx = 0; idx < edx; idx++) {
-				//				__preinit_array_start[idx]();
+				__preinit_array_start[idx]();
 			}
 		}
 
@@ -166,7 +166,7 @@ void _main(void) noexcept
 			extern void (*__init_array_start[])(void) __attribute__((weak));
 			extern void (*__init_array_end[])(void) __attribute__((weak));
 			for (size_t edx = __init_array_end - __init_array_start, idx = 0; idx < edx; idx++) {
-				//				__init_array_start[idx]();
+				__init_array_start[idx]();
 			}
 		}
 
@@ -184,7 +184,7 @@ void _main(void) noexcept
 			extern void (*__fini_array_start[])(void) __attribute__((weak));
 			extern void (*__fini_array_end[])(void) __attribute__((weak));
 			for (size_t edx = __fini_array_end - __fini_array_start, idx = 0; idx < edx; idx++) {
-				//				__fini_array_start[idx]();
+				__fini_array_start[idx]();
 			}
 		}
 	}

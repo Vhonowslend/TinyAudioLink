@@ -20,8 +20,13 @@ extern "C" void __main(void);
 [[gnu::used,
   gnu::section(".interruptVectorTable")]] arm::cm7::nvic::interrupt_vector_table_t __interrupt_vector_table = {
 	.initial_stack_pointer = reinterpret_cast<const void*>(&__stack_start),
-	/* This should be zero according to the documentation, but if its zero we just crash. Very strange behavior
-	   ¯\_(ツ)_/¯. */
+	/* When using a IVT version <=4.2, the entry point is the reset interrupt, contrary to the ARM
+	 * documentation for this. This must be zeroed out for all other versions, but seems to do 
+	 * nothing if it's not set to zero, as there is no way to trigger a software reset anyway.
+	 * 
+	 * Additionally, __main is responsible for resetting the state of the SoC anyway, so this does
+	 * what we want at all times.
+	 */
 	.reset = reinterpret_cast<void (*)()>(&__main),
 };
 void* __interrupt_vector_table_ptr = reinterpret_cast<void*>(&__interrupt_vector_table);
@@ -30,7 +35,7 @@ void* __interrupt_vector_table_ptr = reinterpret_cast<void*>(&__interrupt_vector
 #if NXP_IVT == 0x43
 	.entryPoint = &__main,
 #else
-	.ivt = &__interrupt_vector_table,
+	.entryPoint = &__interrupt_vector_table,
 #endif
 	.dcd      = nullptr, // reinterpret_cast<decltype(nxp::imxrt1060::image_vector_table_t::dcd)>(&__dcd),
 	.bootData = &__boot_data,
