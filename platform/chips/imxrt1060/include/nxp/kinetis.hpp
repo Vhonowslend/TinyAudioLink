@@ -225,5 +225,6 @@ namespace nxp {
 		// 0x1D4 Reserved
 		uint32_t __reserved8[11] = {0};
 	};
+
 	static_assert(sizeof(kinetis_t) == 512, "Kinetis Flash Loader must be 512 bytes long.");
 } // namespace nxp

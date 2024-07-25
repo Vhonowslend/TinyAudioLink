@@ -1,4 +1,5 @@
 #include <arm/cm7/nvic.hpp>
+#include <chip.h>
 #include <nxp/imxrt1060/bootdata.hpp>
 #include <nxp/imxrt1060/imagevectortable.hpp>
 #include <nxp/kinetis.hpp>
@@ -16,10 +17,14 @@ extern "C" void __main(void);
 	.plugin = 0,
 };
 
-[[gnu::used, gnu::section(".interruptVectorTable")]] arm::cm7::nvic::interrupt_vector_table_t __interrupt_vector_table = {
-	.initial_stack_pointer = reinterpret_cast<decltype(arm::cm7::nvic::interrupt_vector_table_t::initial_stack_pointer)>(&__stack_start),
-	.interrupts            = {0},
+[[gnu::used,
+  gnu::section(".interruptVectorTable")]] arm::cm7::nvic::interrupt_vector_table_t __interrupt_vector_table = {
+	.initial_stack_pointer = reinterpret_cast<const void*>(&__stack_start),
+	/* This should be zero according to the documentation, but if its zero we just crash. Very strange behavior
+	   ¯\_(ツ)_/¯. */
+	.reset = reinterpret_cast<void (*)()>(&__main),
 };
+void* __interrupt_vector_table_ptr = reinterpret_cast<void*>(&__interrupt_vector_table);
 
 [[gnu::used, gnu::section(".imageVectorTable")]] const nxp::imxrt1060::image_vector_table_t __image_vector_table = {
 #if NXP_IVT == 0x43
@@ -27,7 +32,7 @@ extern "C" void __main(void);
 #else
 	.ivt = &__interrupt_vector_table,
 #endif
-	.dcd      = nullptr, //reinterpret_cast<decltype(nxp::imxrt1060::image_vector_table_t::dcd)>(&__dcd),
+	.dcd      = nullptr, // reinterpret_cast<decltype(nxp::imxrt1060::image_vector_table_t::dcd)>(&__dcd),
 	.bootData = &__boot_data,
 	.self     = &__image_vector_table,
 };

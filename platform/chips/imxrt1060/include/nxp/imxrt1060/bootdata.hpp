@@ -11,5 +11,6 @@ namespace nxp::imxrt1060 {
 		const size_t   length;
 		const uint32_t plugin;
 	};
+
 	static_assert(sizeof(nxp::imxrt1060::boot_data_t) == 12, "Boot Data must be 12 bytes long.");
 } // namespace nxp::imxrt1060

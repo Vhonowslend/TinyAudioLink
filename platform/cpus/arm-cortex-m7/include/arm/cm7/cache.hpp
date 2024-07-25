@@ -37,18 +37,18 @@ namespace arm::cm7::cache {
 		void clean_invalidate() noexcept;
 
 		/** Flush the cache
-		 * 
+		 *
 		 */
 		void flush() noexcept;
 
 		/** Enable the cache.
-		 * 
+		 *
 		 * This will automatically call clean_invalidate().
 		 */
 		void enable() noexcept;
 
 		/** Disable the cache.
-		 * 
+		 *
 		 * This will automatically call flush().
 		 */
 		void disable() noexcept;

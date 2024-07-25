@@ -30,8 +30,10 @@ namespace nxp::imxrt1060::device_configuration_data {
 	struct [[gnu::packed, gnu::aligned(1)]] command_header_t {
 		uint8_t  tag;
 		uint16_t length;
+
 		union {
 			uint8_t value;
+
 			struct {
 				width   width : 3;
 				uint8_t set : 1;
@@ -49,6 +51,7 @@ namespace nxp::imxrt1060::device_configuration_data {
 				.parameter = {0},
 			};
 			std::intptr_t* address = 0;
+
 			union {
 				size_t  number = 0;
 				size_t* pointer;
@@ -64,6 +67,7 @@ namespace nxp::imxrt1060::device_configuration_data {
 				.parameter = {0},
 			};
 			std::intptr_t* address = 0;
+
 			union {
 				size_t  number = 0;
 				size_t* pointer;

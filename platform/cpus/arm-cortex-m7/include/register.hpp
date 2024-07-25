@@ -20,10 +20,10 @@
 
 template<std::uintptr_t address>
 struct register_unknown {
-	public:
+public:
 	static volatile inline std::uintptr_t& ref = *reinterpret_cast<std::uintptr_t*>(address);
 
-	protected:
+protected:
 	[[gnu::always_inline]]
 	register_unknown&
 		operator=(std::size_t value)
@@ -48,7 +48,7 @@ struct register_unknown {
 
 template<std::uintptr_t address>
 struct register_read_write : public register_unknown<address> {
-	public:
+public:
 	template<typename T>
 	[[gnu::always_inline]] operator T() const
 	{
@@ -93,7 +93,7 @@ struct register_read_write : public register_unknown<address> {
 
 template<std::uintptr_t address>
 struct register_read : public register_unknown<address> {
-	public:
+public:
 	register_read& operator=(std::size_t value) = delete;
 
 	template<typename T>
@@ -110,7 +110,7 @@ struct register_read : public register_unknown<address> {
 
 template<std::uintptr_t address>
 struct register_write : public register_unknown<address> {
-	public:
+public:
 	template<typename T>
 	[[gnu::always_inline]]
 	register_write&

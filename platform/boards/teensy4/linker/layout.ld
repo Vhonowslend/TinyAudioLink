@@ -76,9 +76,9 @@ SECTIONS
 		 *   power of two whose alignment value is greater than or equal to 
 		 *   (sizeof(void*) * numInterruptsSupported), with a minimum of 128
 		 *   bytes.
-		 * - Therefore, align to 1K boundary.
+		 * - Therefore, align to 2K boundary.
 		 */
-		FILL(0x00000000) : . = ALIGN(1K);
+		FILL(0x00000000) : . = ALIGN(2K);
 		KEEP(*(.interruptVectorTable))
 	} >FLASH =0xFFFFFFFF
 

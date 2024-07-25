@@ -21,5 +21,6 @@ void _exit(int code)
 	__builtin_unreachable();
 }
 
-// This is just fucked up, but hey, can't do anything because libc++ AND libUnwind link against the FILE* handle. Which as you might guess, is useless.
+// This is just fucked up, but hey, can't do anything because libc++ AND libUnwind link against the FILE* handle. Which
+// as you might guess, is useless.
 [[gnu::used]] void* stderr = 0;

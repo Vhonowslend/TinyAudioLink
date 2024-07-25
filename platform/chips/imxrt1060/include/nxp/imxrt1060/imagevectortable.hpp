@@ -28,8 +28,10 @@
 
 namespace nxp::imxrt1060 {
 	/** Image Vector Table 4.0/4.1
-	 * - Mentioned here https://forum.pjrc.com/index.php?threads/teensy-4-imagevectortable-not-matching-the-nxp-format.67562/#post-282356
-	 * - Unclear where that user got the information from, since I could not find this documentation they are talking about.
+	 * - Mentioned here
+	 *https://forum.pjrc.com/index.php?threads/teensy-4-imagevectortable-not-matching-the-nxp-format.67562/#post-282356
+	 * - Unclear where that user got the information from, since I could not find this documentation they are talking
+	 *about.
 	 ** Image Vector Table 4.3
 	 * - IMXRT1060RM_rev3.pdf: Chapter 9, Program image, Image and Vector Table and Boot Data
 	 * - IMXRT1060RM_rev1_Processor_Manual.pdf: 8.7.1
@@ -47,7 +49,7 @@ namespace nxp::imxrt1060 {
 		void (*entryPoint)() = nullptr;
 #else
 		// 0x04 Entry: Absolute address of the interrupt vector table
-		arm::cm7::nvic::interrupt_vector_table_t* ivt = nullptr;
+		void* ivt = nullptr;
 #endif
 		// 0x08 Reserved, must be zero.
 		uint32_t __reserved1 = 0;
@@ -62,6 +64,7 @@ namespace nxp::imxrt1060 {
 		// 0x1C Reserved, must be zero.
 		uint32_t __reserved2 = 0;
 	}; // 0x20
+
 	static_assert(sizeof(nxp::imxrt1060::image_vector_table_t) == 32, "Image Vector Table must be 32 bytes long.");
 } // namespace nxp::imxrt1060
 

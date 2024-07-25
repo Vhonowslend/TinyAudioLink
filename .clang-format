@@ -17,7 +17,7 @@
 # Basic Formatting
 TabWidth: 4
 UseTab: ForContinuationAndIndentation
-ColumnLimit: 65535
+ColumnLimit: 120
 #- 0 does not respect the original line breaks!
 
 # Language
@@ -25,7 +25,7 @@ Language: Cpp
 Standard: Latest
 
 # Indentation
-AccessModifierOffset: 0
+AccessModifierOffset: -4
 ConstructorInitializerIndentWidth: 4
 ContinuationIndentWidth: 4
 IndentCaseLabels: false
@@ -100,6 +100,8 @@ BreakStringLiterals: true
 ConstructorInitializerAllOnOneLineOrOnePerLine: false
 Cpp11BracedListStyle: true
 BreakAfterAttributes: Always
+EmptyLineBeforeAccessModifier: LogicalBlock
+SeparateDefinitionBlocks: Always
 
 # Spaces
 SpaceAfterCStyleCast: false
@@ -125,5 +127,5 @@ DisableFormat: false
 FixNamespaceComments: true
 #ForEachMacros: ''
 KeepEmptyLinesAtTheStartOfBlocks: false
-ReflowComments: false
+ReflowComments: true
 SortUsingDeclarations: true

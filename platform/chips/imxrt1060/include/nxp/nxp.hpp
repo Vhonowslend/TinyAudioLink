@@ -24,5 +24,6 @@ namespace nxp {
 		uint16_t length;
 		uint8_t  parameter;
 	};
+
 	static_assert(sizeof(header_t) == 4, "Header must be 4 bytes long.");
 } // namespace nxp
