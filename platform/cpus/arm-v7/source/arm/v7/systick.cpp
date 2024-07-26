@@ -1,66 +1,54 @@
 #include "arm/v7/systick.hpp"
 #include "arm/v7/v7.hpp"
 
-static size_t arm_v7_systick_ticks  = 0;
-static size_t arm_v7_systick_cycles = 0;
-
-void arm::v7::systick::initialize()
+bool arm::v7::systick::supports_external_clock()
 {
-	extern size_t __external_clock_speed;
-
-	// Disable and reset the SysTick clock (handle soft-reset state).
-	arm::v7::SYST_CSR = 0;
-	arm::v7::SYST_CVR = 0;
-
-	// Check if there is an external clock to fall back to, and if the internal clock is still calibrated.
-	size_t   systick      = arm::v7::SYST_CALIB;
-	bool     is_skewed    = (systick & size_t(0b1 << 30)) == 1;
-	bool     has_external = (systick & size_t(0b1 << 31)) == 0;
-	uint32_t tenms        = (systick & ((1 << 24) - 1));
-
-	// Is the internal clock calibrated and safe to use?
-	if ((!is_skewed) && (tenms > 0)) {
-		// Then use it, as it is faster and has higher accuracy.
-
-	} else if (has_external) {
-		// Otherwise fall back to the external clock, which may need to be manually calibrated first.
-	}
+	size_t calib = arm::v7::SYST_CALIB;
+	return (calib & size_t(0b1 << 31)) == 0;
 }
 
-/*
-static uint64_t tick      = 0;
-static uint64_t cycle10ms = 0;
-
-extern "C" [[gnu::used]]
-static void int_systick(void)
+bool arm::v7::systick::calibrated(size_t& ten_milliseconds)
 {
-	++tick;
-};
-	{ // Enable SysTick clock
+	size_t calib     = arm::v7::SYST_CALIB;
+	bool   accurate  = (calib & size_t(0b1 << 30)) == 0;
+	ten_milliseconds = calib & ((0b1 << 24) - 1); // Neat trick to set 24 bits to 1.
+	return accurate;
+}
 
-		// Do we have a reference clock?
-		if ((systick & size_t(0b1 << 31)) == 0) {
-			// Yes, so attempt to use it.
-			bool is_10ms_skewed = (systick & size_t(1 << 30)) != 0;
-			if (!is_10ms_skewed) {
-				cycle10ms = systick & ((1 << 24) - 1);
-				arm::v7::SYST_CSR |= 0b100;
-			} else {
-				// Clock speed is different, so the calibration value is skewed.
-				// We'll have to fall back to external clock sources.
-				arm::v7::SYST_CSR &= ~0b100;
-			}
-		}
+size_t arm::v7::systick::reset_value()
+{
+	return arm::v7::SYST_RVR;
+}
 
-		// Were we able to use the reference clock without issues?
-		if (cycle10ms == 0) {
-			// No, so we need to use the external
-		}
-	}
+void arm::v7::systick::reset_value(size_t value)
+{
+	arm::v7::SYST_RVR = value;
+}
 
-	arm::v7::SYST_CVR = size_t(0);
-	arm::v7::SYST_RVR = size_t(cycle10ms / 1000);
-	arm::v7::SYST_CSR = size_t(0b011);
+size_t arm::v7::systick::value()
+{
+	return arm::v7::SYST_CVR;
+}
 
-	arm::v7::SHPR3 = 0x20200000;
-*/
+void arm::v7::systick::value(size_t value)
+{
+	arm::v7::SYST_CVR = value;
+}
+
+bool arm::v7::systick::enabled()
+{
+	size_t csr = arm::v7::SYST_CSR;
+	return (csr & size_t(0b1)) != 0;
+}
+
+bool arm::v7::systick::interrupt_enabled()
+{
+	size_t csr = arm::v7::SYST_CSR;
+	return (csr & size_t(0b1 << 1)) != 0;
+}
+
+void arm::v7::systick::control(bool enable, bool interrupt, arm::v7::systick::clock_source source)
+{
+	arm::v7::SYST_CSR =
+		((enable ? 1 : 0) << 0) | ((interrupt ? 1 : 0) << 1) | ((source == clock_source::INTERNAL ? 1 : 0) << 2);
+}

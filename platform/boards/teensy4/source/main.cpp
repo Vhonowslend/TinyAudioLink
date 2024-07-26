@@ -36,14 +36,10 @@ extern "C" void _exit(int) noexcept;
 extern "C" void _main(void) noexcept;
 extern "C" int  main() noexcept;
 extern size_t   __flexram_bank_config; // FlexRAM Bank Configuration
-extern void*    __interrupt_vector_table_ptr;
 
 extern "C" [[gnu::used, gnu::naked, gnu::section(".flashCode")]]
 void __main(void) noexcept
 {
-	// Seems like we're offset by one byte exactly?
-	asm volatile("nop");
-
 	// This is done via DCD as well, but just to be safe on reset, we do it again here.
 	// GPR17: Set FLEXRAM_BANK_CFG
 	asm volatile("str %[val], %[gpr]"
@@ -62,7 +58,7 @@ void __main(void) noexcept
 		"str %[v7_init_vtor], %[gpr16];"
 		: [gpr16] "=g"(__IMXRT1060_IOMUXC_GPR16), [vtor] "=g"(__ARMV7_VTOR)
 		: [flexram_bank_cfg_sel] "ir"(0x00000007), [v7_init_vtor_bic] "ir"(0x7F),
-		  [v7_init_vtor] "r"(__interrupt_vector_table_ptr)
+		  [v7_init_vtor] "r"(arm::v7::nvic::interrupt_vector_table_ptr)
 		: "r0", "memory");
 
 	// Reset the stack pointer if we somehow ended up back here unexpectedly.
@@ -133,11 +129,11 @@ void _main(void) noexcept
 		}
 
 		if (BOARD_IRAM_LENGTH > 0) { // Initialize IRAM area
-			//	boot_memcpy(BOARD_IRAM_START, BOARD_IRAM_FLASH, BOARD_IRAM_LENGTH);
+			boot_memcpy(BOARD_IRAM_START, BOARD_IRAM_FLASH, BOARD_IRAM_LENGTH);
 		}
 
 		if (BOARD_ERAM_LENGTH > 0) { // Initialize ERAM area
-			//	boot_memcpy(BOARD_ERAM_START, BOARD_ERAM_FLASH, BOARD_ERAM_LENGTH);
+			boot_memcpy(BOARD_ERAM_START, BOARD_ERAM_FLASH, BOARD_ERAM_LENGTH);
 		}
 
 		// Wait until everything is synchronized again.
@@ -150,7 +146,13 @@ void _main(void) noexcept
 		}
 
 		{ // Enable SysTick timer support.
-			arm::v7::systick::initialize();
+			size_t ten_milliseconds;
+			//			if (arm::v7::systick::calibrated(ten_milliseconds)) {
+			//				arm::v7::systick::reset_value(ten_milliseconds * 100);
+
+			//				arm::v7::systick::control(true, true, arm::v7::systick::clock_source::INTERNAL);
+			//			} else {
+			//			}
 		}
 
 		// Wait until everything is synchronized again.

@@ -436,4 +436,25 @@ namespace arm::v7 {
 	static register_unknown<0xE000EFF4> CID1;
 	static register_unknown<0xE000EFF8> CID2;
 	static register_unknown<0xE000EFFC> CID3;
+
+	[[gnu::always_inline]]
+	void instruction_synchronization_barrier();
+
+	[[gnu::always_inline]]
+	void data_synchronization_barrier();
+
+	[[gnu::always_inline]]
+	void memory_synchronization_barrier();
+
+	[[gnu::always_inline]]
+	void supervisor_call(uint8_t id);
+
+	[[gnu::always_inline]]
+	void signal_event();
+
+	[[gnu::always_inline]]
+	void wait_for_event();
+
+	[[gnu::always_inline]]
+	void wait_for_interrupt();
 } // namespace arm::v7

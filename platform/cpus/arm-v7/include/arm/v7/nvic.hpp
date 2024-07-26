@@ -23,11 +23,11 @@ namespace arm::v7::nvic {
 	};
 
 	enum class priority_t : uint8_t {
-		IMMEDIATE = 0b00000000,
-		HIGH      = 0b01000000,
-		NORMAL    = 0b10000000,
-		LOW       = 0b11000000,
-		IDLE      = 0b11111111,
+		IMMEDIATE = 0b0000'0000,
+		HIGH      = 0b1000'0000,
+		NORMAL    = 0b1100'0000,
+		LOW       = 0b1110'0000,
+		IDLE      = 0b1111'1111,
 	};
 
 	/** Interrupt Vector Table
@@ -61,4 +61,7 @@ namespace arm::v7::nvic {
 	};
 
 	static_assert(sizeof(interrupt_vector_table_t) == (496 * 4), "Interrupt Vector Table size mismatch!");
+
+	extern "C" interrupt_vector_table_t interrupt_vector_table;
+	extern "C" void*                    interrupt_vector_table_ptr;
 } // namespace arm::v7::nvic

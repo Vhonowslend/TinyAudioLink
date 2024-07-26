@@ -27,7 +27,10 @@ bool arm::v7::cache::data::enabled() noexcept
 void arm::v7::cache::data::invalidate() noexcept
 {
 	arm::v7::CSSELR = 0b0;
-	asm volatile("dsb"); // Block until data is synchronized.
+
+	// Block until data is synchronized.
+	arm::v7::data_synchronization_barrier();
+
 	size_t ccsidr         = arm::v7::CCSIDR;
 	size_t cacheline      = ccsidr & 0x7;
 	size_t cachelinewords = cacheline + 0x4;
@@ -42,14 +45,20 @@ void arm::v7::cache::data::invalidate() noexcept
 			arm::v7::DCISW = r3;
 		}
 	}
-	asm volatile("dsb;isb;");
+
+	// Wait for synchronization.
+	arm::v7::data_synchronization_barrier();
+	arm::v7::instruction_synchronization_barrier();
 }
 
 [[gnu::section(".flashCode")]]
 void arm::v7::cache::data::clean() noexcept
 {
 	arm::v7::CSSELR = 0b0;
-	asm volatile("dsb"); // Block until data is synchronized.
+
+	// Block until data is synchronized.
+	arm::v7::data_synchronization_barrier();
+
 	size_t ccsidr         = arm::v7::CCSIDR;
 	size_t cacheline      = ccsidr & 0x7;
 	size_t cachelinewords = cacheline + 0x4;
@@ -64,14 +73,20 @@ void arm::v7::cache::data::clean() noexcept
 			arm::v7::DCCSW = r3;
 		}
 	}
-	asm volatile("dsb;isb;");
+
+	// Wait for synchronization.
+	arm::v7::data_synchronization_barrier();
+	arm::v7::instruction_synchronization_barrier();
 }
 
 [[gnu::section(".flashCode")]]
 void arm::v7::cache::data::clean_invalidate() noexcept
 {
 	arm::v7::CSSELR = 0b0;
-	asm volatile("dsb"); // Block until data is synchronized.
+
+	// Block until data is synchronized.
+	arm::v7::data_synchronization_barrier();
+
 	size_t ccsidr         = arm::v7::CCSIDR;
 	size_t cacheline      = ccsidr & 0x7;
 	size_t cachelinewords = cacheline + 0x4;
@@ -86,7 +101,10 @@ void arm::v7::cache::data::clean_invalidate() noexcept
 			arm::v7::DCCISW = r3;
 		}
 	}
-	asm volatile("dsb;isb;");
+
+	// Wait for synchronization.
+	arm::v7::data_synchronization_barrier();
+	arm::v7::instruction_synchronization_barrier();
 }
 
 [[gnu::section(".flashCode")]]
@@ -100,7 +118,10 @@ void arm::v7::cache::data::enable() noexcept
 	clean_invalidate();
 
 	arm::v7::CCR |= 0b1 << 16;
-	asm volatile("dsb;isb;");
+
+	// Wait for synchronization.
+	arm::v7::data_synchronization_barrier();
+	arm::v7::instruction_synchronization_barrier();
 }
 
 [[gnu::section(".flashCode")]]
@@ -110,7 +131,10 @@ void arm::v7::cache::data::disable() noexcept
 		flush();
 
 		arm::v7::CCR = arm::v7::CCR.operator size_t() & ~(size_t(0b1) << 16ul);
-		asm volatile("dsb;isb;");
+
+		// Wait for synchronization.
+		arm::v7::data_synchronization_barrier();
+		arm::v7::instruction_synchronization_barrier();
 	}
 }
 
@@ -125,7 +149,10 @@ void arm::v7::cache::instruction::invalidate() noexcept
 {
 	arm::v7::CSSELR  = 0b1;
 	arm::v7::ICIALLU = 0;
-	asm volatile("dsb;isb;");
+
+	// Wait for synchronization.
+	arm::v7::data_synchronization_barrier();
+	arm::v7::instruction_synchronization_barrier();
 }
 
 [[gnu::section(".flashCode")]]
@@ -133,12 +160,18 @@ void arm::v7::cache::instruction::enable() noexcept
 {
 	invalidate(); // Trashes instruction cache, but we don't really care.
 	arm::v7::CCR |= 0b1 << 17;
-	asm volatile("dsb;isb;");
+
+	// Wait for synchronization.
+	arm::v7::data_synchronization_barrier();
+	arm::v7::instruction_synchronization_barrier();
 }
 
 [[gnu::section(".flashCode")]]
 void arm::v7::cache::instruction::disable() noexcept
 {
 	arm::v7::CCR = arm::v7::CCR.operator size_t() & ~(size_t(0b1) << 17ul);
-	asm volatile("dsb;isb;");
+
+	// Wait for synchronization.
+	arm::v7::data_synchronization_barrier();
+	arm::v7::instruction_synchronization_barrier();
 }
