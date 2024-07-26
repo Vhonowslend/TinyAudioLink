@@ -30,6 +30,7 @@ namespace nxp::imxrt1060 {
 	/** Image Vector Table 4.0/4.1
 	 * - Mentioned here: https://forum.pjrc.com/index.php?threads/teensy-4-imagevectortable-not-matching-the-nxp-format.67562/#post-282356
 	 * - Unclear where that user got the information from, since I could not find this documentation they are talking about.
+	 * - IMXRT1060RM_rev3.pdf: §9.5.5 describes the behavior, but not why it works like this.
 	 ** Image Vector Table 4.3
 	 * - IMXRT1060RM_rev3.pdf: Chapter 9, Program image, Image and Vector Table and Boot Data
 	 * - IMXRT1060RM_rev1_Processor_Manual.pdf: 8.7.1
@@ -45,8 +46,8 @@ namespace nxp::imxrt1060 {
 		// Teensy 4.x ships with a different version (4.3) that jumps straight to code.
 		// 0x04 Entry: Absolute address of the first function
 		void (*entryPoint)() = nullptr;
-#else // ToDo: Does this actually exist, or was this made up? \
-	// 0x04 Entry: Absolute address of the interrupt vector table
+#else
+		// 0x04 Entry: Absolute address of the interrupt vector table
 		void* entryPoint = nullptr;
 #endif
 		// 0x08 Reserved, must be zero.
