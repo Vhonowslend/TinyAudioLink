@@ -95,55 +95,59 @@ extern "C" [[gnu::used, gnu::section(".flashCode")]]
 void _main(void) noexcept
 {
 	while (true) {
-		{ // Enable all caches.
-			arm::v7::cache::data::enable();
-			arm::v7::cache::instruction::enable();
-		}
+		{ // Initialize Memory
+			{ // Initialize ITCM area
+				boot_memcpy(BOARD_ITCM_START, BOARD_ITCM_FLASH, BOARD_ITCM_LENGTH);
+			}
 
-		{ // Enable any available Floating Point Units.
-			arm::v7::fpu::enable(); // This is a NOP if it's not supported.
-		}
+			{ // Initialize DTCM area
+				// The stack is prior to the data, so we don't want to mess with it.
+				boot_memcpy(BOARD_DTCM_DATA_START, BOARD_DTCM_DATA_FLASH, BOARD_DTCM_DATA_LENGTH);
+				if (false) { // Optionally, zero out BSS, TBSS, SBSS, EH_Frame, etc...
+					extern std::size_t __bss_start; // BSS Start
+					extern std::size_t __bss_end; // BSS End
+					boot_memset(&__bss_start, 0x00,
+								reinterpret_cast<std::size_t>(((size_t)&__bss_end - (size_t)&__bss_start)));
+					extern std::size_t __tbss_start; // BSS Start
+					extern std::size_t __tbss_end; // BSS End
+					boot_memset(&__tbss_start, 0x00,
+								reinterpret_cast<std::size_t>((size_t)&__tbss_end - (size_t)&__tbss_start));
+					extern std::size_t __eh_frame_start; // BSS Start
+					extern std::size_t __eh_frame_length; // BSS End
+					boot_memset(&__eh_frame_start, 0x00, reinterpret_cast<std::size_t>(&__eh_frame_length));
+				}
+			}
 
-		{ // Block until sychronized
-			arm::v7::instruction_synchronization_barrier();
-			arm::v7::data_synchronization_barrier();
-			arm::v7::memory_synchronization_barrier();
-		}
+			if (BOARD_IRAM_LENGTH > 0) { // Initialize IRAM area
+				boot_memcpy(BOARD_IRAM_START, BOARD_IRAM_FLASH, BOARD_IRAM_LENGTH);
+			}
 
-		{ // Initialize ITCM area
-			boot_memcpy(BOARD_ITCM_START, BOARD_ITCM_FLASH, BOARD_ITCM_LENGTH);
-		}
+			if (BOARD_ERAM_LENGTH > 0) { // Initialize ERAM area
+				boot_memcpy(BOARD_ERAM_START, BOARD_ERAM_FLASH, BOARD_ERAM_LENGTH);
+			}
 
-		{ // Initialize DTCM area
-			// The stack is prior to the data, so we don't want to mess with it.
-			boot_memcpy(BOARD_DTCM_DATA_START, BOARD_DTCM_DATA_FLASH, BOARD_DTCM_DATA_LENGTH);
-			if (false) { // Optionally, zero out BSS, TBSS, SBSS, EH_Frame, etc...
-				extern std::size_t __bss_start; // BSS Start
-				extern std::size_t __bss_end; // BSS End
-				boot_memset(&__bss_start, 0x00,
-							reinterpret_cast<std::size_t>(((size_t)&__bss_end - (size_t)&__bss_start)));
-				extern std::size_t __tbss_start; // BSS Start
-				extern std::size_t __tbss_end; // BSS End
-				boot_memset(&__tbss_start, 0x00,
-							reinterpret_cast<std::size_t>((size_t)&__tbss_end - (size_t)&__tbss_start));
-				extern std::size_t __eh_frame_start; // BSS Start
-				extern std::size_t __eh_frame_length; // BSS End
-				boot_memset(&__eh_frame_start, 0x00, reinterpret_cast<std::size_t>(&__eh_frame_length));
+			{ // Block until sychronized
+				arm::v7::instruction_synchronization_barrier();
+				arm::v7::data_synchronization_barrier();
+				arm::v7::memory_synchronization_barrier();
 			}
 		}
 
-		if (BOARD_IRAM_LENGTH > 0) { // Initialize IRAM area
-			boot_memcpy(BOARD_IRAM_START, BOARD_IRAM_FLASH, BOARD_IRAM_LENGTH);
-		}
+		{ // Initialize Hardware Features - either this, or deal with forgetting [[gnu::always_inline]]...
+			{ // Enable all caches.
+				arm::v7::cache::data::enable();
+				arm::v7::cache::instruction::enable();
+			}
 
-		if (BOARD_ERAM_LENGTH > 0) { // Initialize ERAM area
-			boot_memcpy(BOARD_ERAM_START, BOARD_ERAM_FLASH, BOARD_ERAM_LENGTH);
-		}
+			{ // Enable any available Floating Point Units.
+				arm::v7::fpu::enable(); // This is a NOP if it's not supported.
+			}
 
-		{ // Block until sychronized
-			arm::v7::instruction_synchronization_barrier();
-			arm::v7::data_synchronization_barrier();
-			arm::v7::memory_synchronization_barrier();
+			{ // Block until sychronized
+				arm::v7::instruction_synchronization_barrier();
+				arm::v7::data_synchronization_barrier();
+				arm::v7::memory_synchronization_barrier();
+			}
 		}
 
 		{ // Do apparently nothing.
@@ -168,37 +172,39 @@ void _main(void) noexcept
 			arm::v7::memory_synchronization_barrier();
 		}
 
-		{ // Run pre-init.
-			extern void (*__preinit_array_start[])(void) __attribute__((weak));
-			extern void (*__preinit_array_end[])(void) __attribute__((weak));
-			for (size_t edx = __preinit_array_end - __preinit_array_start, idx = 0; idx < edx; idx++) {
-				__preinit_array_start[idx]();
+		{ // Run main code.
+			{ // Run pre-init.
+				extern void (*__preinit_array_start[])(void) __attribute__((weak));
+				extern void (*__preinit_array_end[])(void) __attribute__((weak));
+				for (size_t edx = __preinit_array_end - __preinit_array_start, idx = 0; idx < edx; idx++) {
+					__preinit_array_start[idx]();
+				}
 			}
-		}
 
-		{ // Run init.
-			extern void (*__init_array_start[])(void) __attribute__((weak));
-			extern void (*__init_array_end[])(void) __attribute__((weak));
-			for (size_t edx = __init_array_end - __init_array_start, idx = 0; idx < edx; idx++) {
-				__init_array_start[idx]();
+			{ // Run init.
+				extern void (*__init_array_start[])(void) __attribute__((weak));
+				extern void (*__init_array_end[])(void) __attribute__((weak));
+				for (size_t edx = __init_array_end - __init_array_start, idx = 0; idx < edx; idx++) {
+					__init_array_start[idx]();
+				}
 			}
-		}
 
 // Run main.
 #ifdef __cpp_exceptions
-		try {
+			try {
 #endif
-			main();
+				main();
 #ifdef __cpp_exceptions
-		} catch (...) {
-		}
+			} catch (...) {
+			}
 #endif
 
-		{ // Run fini.
-			extern void (*__fini_array_start[])(void) __attribute__((weak));
-			extern void (*__fini_array_end[])(void) __attribute__((weak));
-			for (size_t edx = __fini_array_end - __fini_array_start, idx = 0; idx < edx; idx++) {
-				__fini_array_start[idx]();
+			{ // Run fini.
+				extern void (*__fini_array_start[])(void) __attribute__((weak));
+				extern void (*__fini_array_end[])(void) __attribute__((weak));
+				for (size_t edx = __fini_array_end - __fini_array_start, idx = 0; idx < edx; idx++) {
+					__fini_array_start[idx]();
+				}
 			}
 		}
 	}
