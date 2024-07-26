@@ -8,7 +8,7 @@ message(STATUS "${PROJECT_NAME}")
 add_library(${PROJECT_NAME} OBJECT)
 add_library(NXP::IMXRT1060 ALIAS ${PROJECT_NAME})
 configure(${PROJECT_NAME})
-link(${PROJECT_NAME} "ARM::Cortex_M7")
+link(${PROJECT_NAME} "ARM::v7")
 
 file(GLOB_RECURSE _INCLUDE FOLLOW_SYMLINKS CONFIGURE_DEPENDS "include/*")
 source_group(TREE "${CMAKE_CURRENT_SOURCE_DIR}/include" PREFIX "Public" FILES ${_INCLUDE})

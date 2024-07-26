@@ -1,4 +1,4 @@
-#include <arm/cm7/nvic.hpp>
+#include <arm/v7/nvic.hpp>
 #include <chip.h>
 #include <nxp/imxrt1060/bootdata.hpp>
 #include <nxp/imxrt1060/imagevectortable.hpp>
@@ -21,7 +21,7 @@ extern "C" [[gnu::used, gnu::section(".bootData")]] const nxp::imxrt1060::boot_d
 
 extern "C"
 	[[gnu::used,
-	  gnu::section(".interruptVectorTable")]] arm::cm7::nvic::interrupt_vector_table_t __interrupt_vector_table = {
+	  gnu::section(".interruptVectorTable")]] arm::v7::nvic::interrupt_vector_table_t __interrupt_vector_table = {
 		.initial_stack_pointer = reinterpret_cast<const void*>(&__stack_start),
 		/* When using a IVT version <=4.2, the entry point is the reset interrupt, contrary to the ARM
 	 * documentation for this. This must be zeroed out for all other versions, but seems to do 

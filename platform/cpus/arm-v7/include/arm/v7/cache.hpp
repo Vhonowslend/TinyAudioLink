@@ -18,7 +18,7 @@
 #include <cinttypes>
 #include <cstddef>
 
-namespace arm::cm7::cache {
+namespace arm::v7::cache {
 	namespace data {
 		/** Is the cache enabled?
 		 */
@@ -72,4 +72,4 @@ namespace arm::cm7::cache {
 		 */
 		void disable() noexcept;
 	} // namespace instruction
-} // namespace arm::cm7::cache
+} // namespace arm::v7::cache

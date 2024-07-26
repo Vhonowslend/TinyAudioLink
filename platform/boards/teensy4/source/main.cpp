@@ -17,10 +17,10 @@
 #import "cinttypes"
 #import "cstddef"
 
-#include <arm/cm7/cache.hpp>
-#include <arm/cm7/fpu.hpp>
-#include <arm/cm7/nvic.hpp>
-#include <arm/cm7/systick.hpp>
+#include <arm/v7/cache.hpp>
+#include <arm/v7/fpu.hpp>
+#include <arm/v7/nvic.hpp>
+#include <arm/v7/systick.hpp>
 #include <nxp/imxrt1060/bootdata.hpp>
 #include <nxp/imxrt1060/deviceconfigurationdata.hpp>
 #include <nxp/imxrt1060/gpio.hpp>
@@ -28,7 +28,7 @@
 #include <nxp/imxrt1060/imxrt1060.hpp>
 #include <nxp/kinetis.hpp>
 
-#include <arm/cm7/cm7.h>
+#include <arm/v7/v7.h>
 #include <nxp/imxrt1060/imxrt1060.h>
 #include "board.h"
 
@@ -52,17 +52,17 @@ void __main(void) noexcept
 				 : "memory");
 
 	// This is done via DCD as well, but just to be safe on reset, we do it again here.
-	// GPR16: Set CM7_INIT_VTOR, and FLEXRAM_BANK_CFG_SEL
+	// GPR16: Set v7_INIT_VTOR, and FLEXRAM_BANK_CFG_SEL
 	// VTOR: Set Interrupt Vector Table Offset correctly.
 	asm volatile(
-		"bic %[cm7_init_vtor], %[cm7_init_vtor_bic];"
-		"str %[cm7_init_vtor], %[vtor];" // Accepts the same value as GPR16, but ignores the lower 7 bits, so it's
+		"bic %[v7_init_vtor], %[v7_init_vtor_bic];"
+		"str %[v7_init_vtor], %[vtor];" // Accepts the same value as GPR16, but ignores the lower 7 bits, so it's
 		// better here.
-		"orr %[cm7_init_vtor], %[cm7_init_vtor], %[flexram_bank_cfg_sel];"
-		"str %[cm7_init_vtor], %[gpr16];"
-		: [gpr16] "=g"(__IMXRT1060_IOMUXC_GPR16), [vtor] "=g"(__CORTEXM7_VTOR)
-		: [flexram_bank_cfg_sel] "ir"(0x00000007), [cm7_init_vtor_bic] "ir"(0x7F),
-		  [cm7_init_vtor] "r"(__interrupt_vector_table_ptr)
+		"orr %[v7_init_vtor], %[v7_init_vtor], %[flexram_bank_cfg_sel];"
+		"str %[v7_init_vtor], %[gpr16];"
+		: [gpr16] "=g"(__IMXRT1060_IOMUXC_GPR16), [vtor] "=g"(__ARMV7_VTOR)
+		: [flexram_bank_cfg_sel] "ir"(0x00000007), [v7_init_vtor_bic] "ir"(0x7F),
+		  [v7_init_vtor] "r"(__interrupt_vector_table_ptr)
 		: "r0", "memory");
 
 	// Reset the stack pointer if we somehow ended up back here unexpectedly.
@@ -99,12 +99,12 @@ void _main(void) noexcept
 {
 	while (true) {
 		{ // Enable all caches.
-			arm::cm7::cache::data::enable();
-			arm::cm7::cache::instruction::enable();
+			arm::v7::cache::data::enable();
+			arm::v7::cache::instruction::enable();
 		}
 
 		{ // Enable any available Floating Point Units.
-			arm::cm7::fpu::enable(); // This is a NOP if it's not supported.
+			arm::v7::fpu::enable(); // This is a NOP if it's not supported.
 		}
 
 		// Wait until everything is synchronized again.
@@ -150,7 +150,7 @@ void _main(void) noexcept
 		}
 
 		{ // Enable SysTick timer support.
-			arm::cm7::systick::initialize();
+			arm::v7::systick::initialize();
 		}
 
 		// Wait until everything is synchronized again.

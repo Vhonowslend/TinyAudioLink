@@ -1,19 +1,19 @@
-#include "arm/cm7/systick.hpp"
-#include "arm/cm7/cm7.hpp"
+#include "arm/v7/systick.hpp"
+#include "arm/v7/v7.hpp"
 
-static size_t arm7_cm7_systick_ticks  = 0;
-static size_t arm7_cm7_systick_cycles = 0;
+static size_t arm_v7_systick_ticks  = 0;
+static size_t arm_v7_systick_cycles = 0;
 
-void arm::cm7::systick::initialize()
+void arm::v7::systick::initialize()
 {
 	extern size_t __external_clock_speed;
 
 	// Disable and reset the SysTick clock (handle soft-reset state).
-	arm::cm7::SYST_CSR = 0;
-	arm::cm7::SYST_CVR = 0;
+	arm::v7::SYST_CSR = 0;
+	arm::v7::SYST_CVR = 0;
 
 	// Check if there is an external clock to fall back to, and if the internal clock is still calibrated.
-	size_t   systick      = arm::cm7::SYST_CALIB;
+	size_t   systick      = arm::v7::SYST_CALIB;
 	bool     is_skewed    = (systick & size_t(0b1 << 30)) == 1;
 	bool     has_external = (systick & size_t(0b1 << 31)) == 0;
 	uint32_t tenms        = (systick & ((1 << 24) - 1));
@@ -44,11 +44,11 @@ static void int_systick(void)
 			bool is_10ms_skewed = (systick & size_t(1 << 30)) != 0;
 			if (!is_10ms_skewed) {
 				cycle10ms = systick & ((1 << 24) - 1);
-				arm::cm7::SYST_CSR |= 0b100;
+				arm::v7::SYST_CSR |= 0b100;
 			} else {
 				// Clock speed is different, so the calibration value is skewed.
 				// We'll have to fall back to external clock sources.
-				arm::cm7::SYST_CSR &= ~0b100;
+				arm::v7::SYST_CSR &= ~0b100;
 			}
 		}
 
@@ -58,9 +58,9 @@ static void int_systick(void)
 		}
 	}
 
-	arm::cm7::SYST_CVR = size_t(0);
-	arm::cm7::SYST_RVR = size_t(cycle10ms / 1000);
-	arm::cm7::SYST_CSR = size_t(0b011);
+	arm::v7::SYST_CVR = size_t(0);
+	arm::v7::SYST_RVR = size_t(cycle10ms / 1000);
+	arm::v7::SYST_CSR = size_t(0b011);
 
-	arm::cm7::SHPR3 = 0x20200000;
+	arm::v7::SHPR3 = 0x20200000;
 */

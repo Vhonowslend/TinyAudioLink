@@ -17,7 +17,7 @@
 #pragma once
 #include <cinttypes>
 #include <endian.h>
-#include "arm/cm7/nvic.hpp"
+#include "arm/v7/nvic.hpp"
 #include "nxp/imxrt1060/bootdata.hpp"
 #include "nxp/imxrt1060/deviceconfigurationdata.hpp"
 #include "nxp/nxp.hpp"

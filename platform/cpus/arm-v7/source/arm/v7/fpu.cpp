@@ -14,34 +14,34 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-#include "arm/cm7/fpu.hpp"
-#include "arm/cm7/cm7.hpp"
+#include "arm/v7/fpu.hpp"
+#include "arm/v7/v7.hpp"
 
 [[gnu::section(".flashCode")]]
-bool arm::cm7::fpu::supported() noexcept
+bool arm::v7::fpu::supported() noexcept
 {
-	size_t old = arm::cm7::CPACR;
-	arm::cm7::CPACR |= (size_t(0b11) << 20) | (size_t(0b11) << 22);
-	bool supported  = enabled();
-	arm::cm7::CPACR = old;
+	size_t old = arm::v7::CPACR;
+	arm::v7::CPACR |= (size_t(0b11) << 20) | (size_t(0b11) << 22);
+	bool supported = enabled();
+	arm::v7::CPACR = old;
 	return supported;
 }
 
 [[gnu::section(".flashCode")]]
-bool arm::cm7::fpu::enabled() noexcept
+bool arm::v7::fpu::enabled() noexcept
 {
-	return (((size_t)arm::cm7::CPACR >> 20) & 0b11) | (((size_t)arm::cm7::CPACR >> 22) & 0b11) ? true : false;
+	return (((size_t)arm::v7::CPACR >> 20) & 0b11) | (((size_t)arm::v7::CPACR >> 22) & 0b11) ? true : false;
 }
 
 [[gnu::section(".flashCode")]]
-bool arm::cm7::fpu::enable() noexcept
+bool arm::v7::fpu::enable() noexcept
 {
-	arm::cm7::CPACR |= (0b11 << 20) | (0b11 << 22);
+	arm::v7::CPACR |= (0b11 << 20) | (0b11 << 22);
 	return enabled();
 }
 
 [[gnu::section(".flashCode")]]
-void arm::cm7::fpu::disable() noexcept
+void arm::v7::fpu::disable() noexcept
 {
-	arm::cm7::CPACR = (size_t)arm::cm7::CPACR & ~size_t((size_t(0b11) << 20) | (size_t(0b11) << 22));
+	arm::v7::CPACR = (size_t)arm::v7::CPACR & ~size_t((size_t(0b11) << 20) | (size_t(0b11) << 22));
 }

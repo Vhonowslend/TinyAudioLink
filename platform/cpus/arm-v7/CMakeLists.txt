@@ -1,4 +1,4 @@
-project(ARM_Cortex_M7
+project(ARM_v7
 	LANGUAGES C CXX ASM
 )
 list(POP_BACK CMAKE_MESSAGE_INDENT)
@@ -6,7 +6,7 @@ list(APPEND CMAKE_MESSAGE_INDENT "[ARM Cortex M7]" " ")
 message(STATUS "${PROJECT_NAME}")
 
 add_library(${PROJECT_NAME} OBJECT)
-add_library(ARM::Cortex_M7 ALIAS ${PROJECT_NAME})
+add_library(ARM::v7 ALIAS ${PROJECT_NAME})
 configure(${PROJECT_NAME})
 
 file(GLOB_RECURSE _INCLUDE FOLLOW_SYMLINKS CONFIGURE_DEPENDS "include/*")

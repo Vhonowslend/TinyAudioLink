@@ -14,8 +14,8 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-#include <arm/cm7/cm7.hpp>
-#include <arm/cm7/systick.hpp>
+#include <arm/v7/systick.hpp>
+#include <arm/v7/v7.hpp>
 #include <cinttypes>
 #include <cstddef>
 #include <nxp/imxrt1060/gpio.hpp>

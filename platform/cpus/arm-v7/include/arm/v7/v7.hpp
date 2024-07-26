@@ -17,9 +17,9 @@
 #pragma once
 #include "register.hpp"
 
-namespace arm::cm7 {
+namespace arm::v7 {
 	//static register_read_write<0xE000E000> __reserved;
-	static register_read<0xE000E004> ICTR;
+	static register_read<0xE000E004>       ICTR;
 	static register_read_write<0xE000E008> ACTLR;
 	//static register_unknown<0xE000E00C> __reserved;
 
@@ -379,7 +379,7 @@ namespace arm::cm7 {
 	 */
 	static register_read_write<0xE000ED88> CPACR;
 
-	static register_read<0xE000ED90> MPU_TYPE;
+	static register_read<0xE000ED90>       MPU_TYPE;
 	static register_read_write<0xE000ED94> MPU_CTRL;
 	static register_read_write<0xE000ED98> MPU_RNR;
 	static register_read_write<0xE000ED9C> MPU_RBAR;
@@ -436,4 +436,4 @@ namespace arm::cm7 {
 	static register_unknown<0xE000EFF4> CID1;
 	static register_unknown<0xE000EFF8> CID2;
 	static register_unknown<0xE000EFFC> CID3;
-} // namespace arm::cm7
+} // namespace arm::v7

@@ -62,7 +62,7 @@ target_link_libraries(${PROJECT_NAME}
 		"c++" # C++ Stuff
 )
 link(${PROJECT_NAME} "NXP::IMXRT1060")
-link(${PROJECT_NAME} "ARM::Cortex_M7")
+link(${PROJECT_NAME} "ARM::v7")
 
 target_compile_definitions(${PROJECT_NAME}
 	PRIVATE

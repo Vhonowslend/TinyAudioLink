@@ -1,4 +1,4 @@
-#include <arm/cm7/cm7.h>
+#include <arm/v7/v7.h>
 #include <nxp/imxrt1060/imxrt1060.h>
 
 [[gnu::section(".flashCode")]]
@@ -11,7 +11,7 @@ void _exit(int code)
 	asm volatile(
 		"str %[dhcsr_val], %[dhcsr];"
 		"str %[aircr_val], %[aircr]"
-		: [dhcsr] "=g"(__CORTEXM7_DHCSR), [aircr] "=g"(__CORTEXM7_AIRCR)
+		: [dhcsr] "=g"(__ARMV7_DHCSR), [aircr] "=g"(__ARMV7_AIRCR)
 		: [dhcsr_val] "r"(0xA05F0001), [aircr_val] "r"(0b101)
 		:);
 

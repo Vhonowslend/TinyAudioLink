@@ -14,21 +14,65 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-#include "arm/cm7/cache.hpp"
-#include "arm/cm7/cm7.hpp"
+#include "arm/v7/cache.hpp"
+#include "arm/v7/v7.hpp"
 
 [[gnu::section(".flashCode")]]
-bool arm::cm7::cache::data::enabled() noexcept
+bool arm::v7::cache::data::enabled() noexcept
 {
-	return ((size_t)arm::cm7::CCR) >> 16 & 0b1;
+	return ((size_t)arm::v7::CCR) >> 16 & 0b1;
 }
 
 [[gnu::section(".flashCode")]]
-void arm::cm7::cache::data::invalidate() noexcept
+void arm::v7::cache::data::invalidate() noexcept
 {
-	arm::cm7::CSSELR = 0b0;
+	arm::v7::CSSELR = 0b0;
 	asm volatile("dsb"); // Block until data is synchronized.
-	size_t ccsidr         = arm::cm7::CCSIDR;
+	size_t ccsidr         = arm::v7::CCSIDR;
+	size_t cacheline      = ccsidr & 0x7;
+	size_t cachelinewords = cacheline + 0x4;
+	size_t numways        = (ccsidr >> 3) & 0x3FF;
+	size_t numsets        = (ccsidr >> 13) & 0xFFFF;
+	size_t bitoffset; // Didn't find a C equivalent, so direct call it is.
+	asm volatile("clz %[o], %[i]" : [o] "=r"(bitoffset) : [i] "r"(numways) :);
+	for (auto sets = numsets; sets > 0; sets--) {
+		size_t r8 = sets << cachelinewords;
+		for (auto ways = numways; ways > 0; ways--) {
+			size_t r3      = (ways << bitoffset | r8);
+			arm::v7::DCISW = r3;
+		}
+	}
+	asm volatile("dsb;isb;");
+}
+
+[[gnu::section(".flashCode")]]
+void arm::v7::cache::data::clean() noexcept
+{
+	arm::v7::CSSELR = 0b0;
+	asm volatile("dsb"); // Block until data is synchronized.
+	size_t ccsidr         = arm::v7::CCSIDR;
+	size_t cacheline      = ccsidr & 0x7;
+	size_t cachelinewords = cacheline + 0x4;
+	size_t numways        = (ccsidr >> 3) & 0x3FF;
+	size_t numsets        = (ccsidr >> 13) & 0xFFFF;
+	size_t bitoffset; // Didn't find a C equivalent, so direct call it is.
+	asm volatile("clz %[o], %[i]" : [o] "=r"(bitoffset) : [i] "r"(numways) :);
+	for (auto sets = numsets; sets > 0; sets--) {
+		size_t r8 = sets << cachelinewords;
+		for (auto ways = numways; ways > 0; ways--) {
+			size_t r3      = (ways << bitoffset | r8);
+			arm::v7::DCCSW = r3;
+		}
+	}
+	asm volatile("dsb;isb;");
+}
+
+[[gnu::section(".flashCode")]]
+void arm::v7::cache::data::clean_invalidate() noexcept
+{
+	arm::v7::CSSELR = 0b0;
+	asm volatile("dsb"); // Block until data is synchronized.
+	size_t ccsidr         = arm::v7::CCSIDR;
 	size_t cacheline      = ccsidr & 0x7;
 	size_t cachelinewords = cacheline + 0x4;
 	size_t numways        = (ccsidr >> 3) & 0x3FF;
@@ -39,106 +83,62 @@ void arm::cm7::cache::data::invalidate() noexcept
 		size_t r8 = sets << cachelinewords;
 		for (auto ways = numways; ways > 0; ways--) {
 			size_t r3       = (ways << bitoffset | r8);
-			arm::cm7::DCISW = r3;
+			arm::v7::DCCISW = r3;
 		}
 	}
 	asm volatile("dsb;isb;");
 }
 
 [[gnu::section(".flashCode")]]
-void arm::cm7::cache::data::clean() noexcept
-{
-	arm::cm7::CSSELR = 0b0;
-	asm volatile("dsb"); // Block until data is synchronized.
-	size_t ccsidr         = arm::cm7::CCSIDR;
-	size_t cacheline      = ccsidr & 0x7;
-	size_t cachelinewords = cacheline + 0x4;
-	size_t numways        = (ccsidr >> 3) & 0x3FF;
-	size_t numsets        = (ccsidr >> 13) & 0xFFFF;
-	size_t bitoffset; // Didn't find a C equivalent, so direct call it is.
-	asm volatile("clz %[o], %[i]" : [o] "=r"(bitoffset) : [i] "r"(numways) :);
-	for (auto sets = numsets; sets > 0; sets--) {
-		size_t r8 = sets << cachelinewords;
-		for (auto ways = numways; ways > 0; ways--) {
-			size_t r3       = (ways << bitoffset | r8);
-			arm::cm7::DCCSW = r3;
-		}
-	}
-	asm volatile("dsb;isb;");
-}
-
-[[gnu::section(".flashCode")]]
-void arm::cm7::cache::data::clean_invalidate() noexcept
-{
-	arm::cm7::CSSELR = 0b0;
-	asm volatile("dsb"); // Block until data is synchronized.
-	size_t ccsidr         = arm::cm7::CCSIDR;
-	size_t cacheline      = ccsidr & 0x7;
-	size_t cachelinewords = cacheline + 0x4;
-	size_t numways        = (ccsidr >> 3) & 0x3FF;
-	size_t numsets        = (ccsidr >> 13) & 0xFFFF;
-	size_t bitoffset; // Didn't find a C equivalent, so direct call it is.
-	asm volatile("clz %[o], %[i]" : [o] "=r"(bitoffset) : [i] "r"(numways) :);
-	for (auto sets = numsets; sets > 0; sets--) {
-		size_t r8 = sets << cachelinewords;
-		for (auto ways = numways; ways > 0; ways--) {
-			size_t r3        = (ways << bitoffset | r8);
-			arm::cm7::DCCISW = r3;
-		}
-	}
-	asm volatile("dsb;isb;");
-}
-
-[[gnu::section(".flashCode")]]
-void arm::cm7::cache::data::flush() noexcept
+void arm::v7::cache::data::flush() noexcept
 {}
 
 [[gnu::section(".flashCode")]]
-void arm::cm7::cache::data::enable() noexcept
+void arm::v7::cache::data::enable() noexcept
 {
 	disable();
 	clean_invalidate();
 
-	arm::cm7::CCR |= 0b1 << 16;
+	arm::v7::CCR |= 0b1 << 16;
 	asm volatile("dsb;isb;");
 }
 
 [[gnu::section(".flashCode")]]
-void arm::cm7::cache::data::disable() noexcept
+void arm::v7::cache::data::disable() noexcept
 {
 	if (enabled()) {
 		flush();
 
-		arm::cm7::CCR = arm::cm7::CCR.operator size_t() & ~(size_t(0b1) << 16ul);
+		arm::v7::CCR = arm::v7::CCR.operator size_t() & ~(size_t(0b1) << 16ul);
 		asm volatile("dsb;isb;");
 	}
 }
 
 [[gnu::section(".flashCode")]]
-bool arm::cm7::cache::instruction::enabled() noexcept
+bool arm::v7::cache::instruction::enabled() noexcept
 {
-	return ((size_t)arm::cm7::CCR) >> 17 & 0b1;
+	return ((size_t)arm::v7::CCR) >> 17 & 0b1;
 }
 
 [[gnu::section(".flashCode")]]
-void arm::cm7::cache::instruction::invalidate() noexcept
+void arm::v7::cache::instruction::invalidate() noexcept
 {
-	arm::cm7::CSSELR  = 0b1;
-	arm::cm7::ICIALLU = 0;
+	arm::v7::CSSELR  = 0b1;
+	arm::v7::ICIALLU = 0;
 	asm volatile("dsb;isb;");
 }
 
 [[gnu::section(".flashCode")]]
-void arm::cm7::cache::instruction::enable() noexcept
+void arm::v7::cache::instruction::enable() noexcept
 {
 	invalidate(); // Trashes instruction cache, but we don't really care.
-	arm::cm7::CCR |= 0b1 << 17;
+	arm::v7::CCR |= 0b1 << 17;
 	asm volatile("dsb;isb;");
 }
 
 [[gnu::section(".flashCode")]]
-void arm::cm7::cache::instruction::disable() noexcept
+void arm::v7::cache::instruction::disable() noexcept
 {
-	arm::cm7::CCR = arm::cm7::CCR.operator size_t() & ~(size_t(0b1) << 17ul);
+	arm::v7::CCR = arm::v7::CCR.operator size_t() & ~(size_t(0b1) << 17ul);
 	asm volatile("dsb;isb;");
 }

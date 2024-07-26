@@ -3,7 +3,7 @@
 #include <cstddef>
 #include <register.hpp>
 
-namespace arm::cm7::nvic {
+namespace arm::v7::nvic {
 	typedef void (*function_t)(void);
 
 	enum class identifier_t : uint32_t {
@@ -61,4 +61,4 @@ namespace arm::cm7::nvic {
 	};
 
 	static_assert(sizeof(interrupt_vector_table_t) == (496 * 4), "Interrupt Vector Table size mismatch!");
-} // namespace arm::cm7::nvic
+} // namespace arm::v7::nvic

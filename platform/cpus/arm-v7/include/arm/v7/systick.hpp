@@ -2,6 +2,6 @@
 #import "cinttypes"
 #import "cstddef"
 
-namespace arm::cm7::systick {
+namespace arm::v7::systick {
 	void initialize();
 }

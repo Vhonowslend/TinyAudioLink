@@ -18,7 +18,7 @@
 #include <cinttypes>
 #include <cstddef>
 
-namespace arm::cm7::fpu {
+namespace arm::v7::fpu {
 	/** Does this hardware support an FPU?
 	 */
 	bool supported() noexcept;
@@ -38,4 +38,4 @@ namespace arm::cm7::fpu {
 	 * Ensure all code after this point uses soft-float.
 	 */
 	void disable() noexcept;
-} // namespace arm::cm7::fpu
+} // namespace arm::v7::fpu
