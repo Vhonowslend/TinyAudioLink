@@ -438,23 +438,23 @@ namespace arm::v7 {
 	static register_unknown<0xE000EFFC> CID3;
 
 	[[gnu::always_inline]]
-	void instruction_synchronization_barrier();
+	void instruction_synchronization_barrier() noexcept;
 
 	[[gnu::always_inline]]
-	void data_synchronization_barrier();
+	void data_synchronization_barrier() noexcept;
 
 	[[gnu::always_inline]]
-	void memory_synchronization_barrier();
+	void memory_synchronization_barrier() noexcept;
 
 	[[gnu::always_inline]]
-	void supervisor_call(uint8_t id);
+	void supervisor_call(uint8_t id) noexcept;
 
 	[[gnu::always_inline]]
-	void signal_event();
+	void signal_event() noexcept;
 
 	[[gnu::always_inline]]
-	void wait_for_event();
+	void wait_for_event() noexcept;
 
 	[[gnu::always_inline]]
-	void wait_for_interrupt();
+	void wait_for_interrupt() noexcept;
 } // namespace arm::v7

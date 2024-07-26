@@ -21,6 +21,7 @@
 #include <arm/v7/fpu.hpp>
 #include <arm/v7/nvic.hpp>
 #include <arm/v7/systick.hpp>
+#include <arm/v7/v7.hpp>
 #include <nxp/imxrt1060/bootdata.hpp>
 #include <nxp/imxrt1060/deviceconfigurationdata.hpp>
 #include <nxp/imxrt1060/gpio.hpp>
@@ -103,8 +104,11 @@ void _main(void) noexcept
 			arm::v7::fpu::enable(); // This is a NOP if it's not supported.
 		}
 
-		// Wait until everything is synchronized again.
-		asm volatile("isb;dsb;dmb" ::: "memory");
+		{ // Block until sychronized
+			arm::v7::instruction_synchronization_barrier();
+			arm::v7::data_synchronization_barrier();
+			arm::v7::memory_synchronization_barrier();
+		}
 
 		{ // Initialize ITCM area
 			boot_memcpy(BOARD_ITCM_START, BOARD_ITCM_FLASH, BOARD_ITCM_LENGTH);
@@ -136,8 +140,11 @@ void _main(void) noexcept
 			boot_memcpy(BOARD_ERAM_START, BOARD_ERAM_FLASH, BOARD_ERAM_LENGTH);
 		}
 
-		// Wait until everything is synchronized again.
-		asm volatile("dmb;dsb;isb;" ::: "memory");
+		{ // Block until sychronized
+			arm::v7::instruction_synchronization_barrier();
+			arm::v7::data_synchronization_barrier();
+			arm::v7::memory_synchronization_barrier();
+		}
 
 		{ // Do apparently nothing.
 			// - Reduce bias current by 30% on ACMP1, ACMP3.
@@ -155,8 +162,11 @@ void _main(void) noexcept
 			//			}
 		}
 
-		// Wait until everything is synchronized again.
-		asm volatile("dmb;dsb;isb;" ::: "memory");
+		{ // Block until sychronized
+			arm::v7::instruction_synchronization_barrier();
+			arm::v7::data_synchronization_barrier();
+			arm::v7::memory_synchronization_barrier();
+		}
 
 		{ // Run pre-init.
 			extern void (*__preinit_array_start[])(void) __attribute__((weak));

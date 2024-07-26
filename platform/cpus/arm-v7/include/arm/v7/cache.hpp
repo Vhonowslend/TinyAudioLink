@@ -22,54 +22,64 @@ namespace arm::v7::cache {
 	namespace data {
 		/** Is the cache enabled?
 		 */
+		[[gnu::always_inline]]
 		bool enabled() noexcept;
 
 		/** Invalidate the cache.
 		 */
+		[[gnu::always_inline]]
 		void invalidate() noexcept;
 
 		/** Clean the cache
 		 */
+		[[gnu::always_inline]]
 		void clean() noexcept;
 
 		/** Clean and invalidate the cache
 		 */
+		[[gnu::always_inline]]
 		void clean_invalidate() noexcept;
 
 		/** Flush the cache
-		 *
 		 */
+		[[gnu::always_inline]]
 		void flush() noexcept;
 
 		/** Enable the cache.
 		 *
 		 * This will automatically call clean_invalidate().
 		 */
+		[[gnu::always_inline]]
 		void enable() noexcept;
 
 		/** Disable the cache.
 		 *
 		 * This will automatically call flush().
 		 */
+		[[gnu::always_inline]]
 		void disable() noexcept;
 	} // namespace data
 
 	namespace instruction {
 		/** Is the cache enabled?
 		 */
+		[[gnu::always_inline]]
 		bool enabled() noexcept;
 
 		/** Invalidate the cache.
 		 */
+		[[gnu::always_inline]]
 		void invalidate() noexcept;
 
 		/** Enable the cache.
 		 * Remember to invalidate the cache first.
 		 */
+		[[gnu::always_inline]]
 		void enable() noexcept;
 
 		/** Disable the cache.
 		 */
+		[[gnu::always_inline]]
 		void disable() noexcept;
 	} // namespace instruction
 } // namespace arm::v7::cache
