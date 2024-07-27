@@ -19,14 +19,14 @@ namespace arm::v7::nvic {
 		PENDING_SUPERVISOR_CALL = 14,
 		SYSTICK                 = 15,
 		EXTERNAL                = 16,
-		EXTERNAL_MAX            = 495,
+		EXTERNAL_MAX            = 496,
 	};
 
 	enum class priority_t : uint8_t {
 		IMMEDIATE = 0b0000'0000,
-		HIGH      = 0b1000'0000,
-		NORMAL    = 0b1100'0000,
-		LOW       = 0b1110'0000,
+		HIGH      = 0b0011'1111,
+		NORMAL    = 0b0111'1111,
+		LOW       = 0b1011'1111,
 		IDLE      = 0b1111'1111,
 	};
 
@@ -43,18 +43,20 @@ namespace arm::v7::nvic {
 			function_t interrupts[495] = {0};
 
 			[[gnu::packed, gnu::aligned(1)]] struct {
-				function_t reset;
-				function_t non_maskable_interrupt;
-				function_t hard_fault;
-				function_t mem_manage;
-				function_t bus_fault;
-				function_t usage_fault;
-				function_t __reserved0[3];
-				function_t supervisor_call;
-				function_t debug_monitor;
-				function_t __reserved1;
-				function_t async_supervisor_call;
-				function_t systick;
+				// Exceptions
+				function_t reset; // Id 1
+				function_t non_maskable_interrupt; // Id 2
+				function_t hard_fault; // Id 3
+				function_t mem_manage; // Id 4
+				function_t bus_fault; // Id 5
+				function_t usage_fault; // Id 6
+				function_t __reserved0[4]; // Id 7, 8, 9, 10
+				function_t supervisor_call; // Id 11
+				function_t debug_monitor; // Id 12
+				function_t __reserved1; // Id 13
+				// Interrupts
+				function_t async_supervisor_call; // Id 14
+				function_t systick; // Id 15?!
 				function_t external[480];
 			};
 		};
@@ -64,4 +66,31 @@ namespace arm::v7::nvic {
 
 	extern "C" interrupt_vector_table_t interrupt_vector_table;
 	extern "C" void*                    interrupt_vector_table_ptr;
+
+	/** Mask Configurable Interrupts
+	 *
+	 * Temporarily disable handling configurable interrupts.
+	 */
+	class priority_mask {
+		bool _old;
+
+	public:
+		[[gnu::always_inline]] ~priority_mask();
+
+		[[gnu::always_inline]] priority_mask();
+	};
+
+	/** Mask Non-Configurable Interrupts
+	 *
+	 * Temporarily disable handling non-configurable interrupts.
+	 */
+	class fault_mask {
+		bool _old;
+
+	public:
+		[[gnu::always_inline]] ~fault_mask();
+
+		[[gnu::always_inline]] fault_mask();
+	};
+
 } // namespace arm::v7::nvic

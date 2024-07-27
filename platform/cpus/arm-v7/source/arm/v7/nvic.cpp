@@ -16,3 +16,27 @@ extern "C" size_t __stack_start;
 	.reset = reinterpret_cast<void (*)()>(&__main),
 };
 void* arm::v7::nvic::interrupt_vector_table_ptr = reinterpret_cast<void*>(&arm::v7::nvic::interrupt_vector_table);
+
+arm::v7::nvic::priority_mask::priority_mask()
+{
+	asm volatile("mrs %[v], primask" : [v] "=r"(_old) :);
+
+	asm volatile("msr primask, %[v]" : : [v] "r"(1));
+}
+
+arm::v7::nvic::priority_mask::~priority_mask()
+{
+	asm volatile("msr primask, %[v]" : : [v] "r"(_old));
+}
+
+arm::v7::nvic::fault_mask::fault_mask()
+{
+	asm volatile("mrs %[v], faultmask" : [v] "=r"(_old) :);
+
+	asm volatile("msr faultmask, %[v]" : : [v] "r"(1));
+}
+
+arm::v7::nvic::fault_mask::~fault_mask()
+{
+	asm volatile("msr faultmask, %[v]" : : [v] "r"(_old));
+}
