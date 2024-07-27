@@ -28,8 +28,11 @@ namespace arm::v7 {
 	static register_read_write<0xE000E018> SYST_CVR;
 	static register_read<0xE000E01C>       SYST_CALIB;
 
-	struct [[gnu::packed, gnu::aligned(1)]] iser_t {
-		bool status[32];
+	struct [[gnu::packed, gnu::aligned(1)]] nvic_iser_t {
+		union {
+			bool   status[32];
+			size_t value;
+		};
 	};
 
 	static register_read_write<0xE000E100> NVIC_ISER0;
@@ -49,8 +52,11 @@ namespace arm::v7 {
 	static register_read_write<0xE000E138> NVIC_ISER14;
 	static register_read_write<0xE000E13C> NVIC_ISER15;
 
-	struct [[gnu::packed, gnu::aligned(1)]] icer_t {
-		bool status[32];
+	struct [[gnu::packed, gnu::aligned(1)]] nvic_icer_t {
+		union {
+			bool   status[32];
+			size_t value;
+		};
 	};
 
 	static register_read_write<0xE000E180> NVIC_ICER0;
@@ -70,8 +76,11 @@ namespace arm::v7 {
 	static register_read_write<0xE000E1B8> NVIC_ICER14;
 	static register_read_write<0xE000E1BC> NVIC_ICER15;
 
-	struct [[gnu::packed, gnu::aligned(1)]] ispr_t {
-		bool status[32];
+	struct [[gnu::packed, gnu::aligned(1)]] nvic_ispr_t {
+		union {
+			bool   status[32];
+			size_t value;
+		};
 	};
 
 	static register_read_write<0xE000E200> NVIC_ISPR0;
@@ -91,8 +100,11 @@ namespace arm::v7 {
 	static register_read_write<0xE000E238> NVIC_ISPR14;
 	static register_read_write<0xE000E23C> NVIC_ISPR15;
 
-	struct [[gnu::packed, gnu::aligned(1)]] icpr_t {
-		bool status[32];
+	struct [[gnu::packed, gnu::aligned(1)]] nvic_icpr_t {
+		union {
+			bool   status[32];
+			size_t value;
+		};
 	};
 
 	static register_read_write<0xE000E280> NVIC_ICPR0;
@@ -112,8 +124,11 @@ namespace arm::v7 {
 	static register_read_write<0xE000E2B8> NVIC_ICPR14;
 	static register_read_write<0xE000E2BC> NVIC_ICPR15;
 
-	struct [[gnu::packed, gnu::aligned(1)]] iabr_t {
-		bool status[32];
+	struct [[gnu::packed, gnu::aligned(1)]] nvic_iabr_t {
+		union {
+			bool   status[32];
+			size_t value;
+		};
 	};
 
 	static register_read<0xE000E300> NVIC_IABR0;
@@ -133,8 +148,11 @@ namespace arm::v7 {
 	static register_read<0xE000E338> NVIC_IABR14;
 	static register_read<0xE000E33C> NVIC_IABR15;
 
-	struct [[gnu::packed, gnu::aligned(1)]] ipr_t {
-		uint8_t priority[4];
+	struct [[gnu::packed, gnu::aligned(1)]] nvic_ipr_t {
+		union {
+			uint8_t priority[4];
+			size_t  value;
+		};
 	};
 
 	static register_read_write<0xE000E400> NVIC_IPR0;
@@ -455,6 +473,14 @@ namespace arm::v7 {
 	[[gnu::always_inline]]
 	void wait_for_event() noexcept;
 
+	/** Wait for the next interrupt
+	 * 
+	 * Pauses execution until one of the following occurs:
+	 * - An NMI occurs and is taken.
+	 * - An Interrupt is masked and becomes pending.
+	 * - A debugger request entry.
+	 * Because of this, this also intentionally masks all interrupts.
+	 */
 	[[gnu::always_inline]]
 	void wait_for_interrupt() noexcept;
 } // namespace arm::v7
