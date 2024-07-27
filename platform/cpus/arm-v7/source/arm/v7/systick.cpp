@@ -11,7 +11,7 @@ bool arm::v7::systick::calibrated(size_t& ten_milliseconds)
 {
 	size_t calib     = arm::v7::SYST_CALIB;
 	bool   accurate  = (calib & size_t(0b1 << 30)) == 0;
-	ten_milliseconds = calib & ((0b1 << 24) - 1); // Neat trick to set 24 bits to 1.
+	ten_milliseconds = calib & 0b111111111111111111111111;
 	return accurate;
 }
 
@@ -49,6 +49,7 @@ bool arm::v7::systick::interrupt_enabled()
 
 void arm::v7::systick::control(bool enable, bool interrupt, arm::v7::systick::clock_source source)
 {
-	arm::v7::SYST_CSR =
-		((enable ? 1 : 0) << 0) | ((interrupt ? 1 : 0) << 1) | ((source == clock_source::INTERNAL ? 1 : 0) << 2);
+	size_t csr = arm::v7::SYST_CSR;
+	csr |= ((enable ? 1 : 0) << 0) | ((interrupt ? 1 : 0) << 1) | ((source == clock_source::INTERNAL ? 1 : 0) << 2);
+	arm::v7::SYST_CSR = csr;
 }
