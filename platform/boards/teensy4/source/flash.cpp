@@ -19,6 +19,18 @@ extern "C" [[gnu::used, gnu::section(".bootData")]] const nxp::imxrt1060::boot_d
 	.plugin = 0,
 };
 
+[[gnu::used, gnu::section(".interruptVectorTable")]] arm::v7::nvic::interrupt_vector_table_t arm::v7::nvic::interrupt_vector_table = {
+	.initial_stack_pointer = reinterpret_cast<const void*>(&__stack_start),
+	// When using a IVT version <=4.2, the entry point is the reset interrupt, contrary to the ARM
+	// documentation for this. This must be zeroed out for all other versions, but seems to do
+	// nothing if it's not set to zero, as there is no way to trigger a software reset anyway.
+	//
+	// Additionally, __main is responsible for resetting the state of the SoC anyway, so this does
+	// what we want at all times.
+	.reset = reinterpret_cast<arm::v7::nvic::function_t>(&__main),
+};
+void* arm::v7::nvic::interrupt_vector_table_ptr = reinterpret_cast<void*>(&arm::v7::nvic::interrupt_vector_table);
+
 namespace dcd = nxp::imxrt1060::device_configuration_data;
 
 struct [[gnu::packed, gnu::aligned(1)]] dcd_t {
@@ -106,23 +118,21 @@ struct [[gnu::packed, gnu::aligned(1)]] dcd_t {
 		.value_or_mask =
 			{
 				// C/C++ is unable to know this at compile time, as it is only placed into the right place at link time.
-				.number = /*(reinterpret_cast<size_t>(&__interrupt_vector_table) & ~0x7F) |*/ (1 << 2)
-						  | (0b11 /* Default from Documentation */),
+				.number = /*(reinterpret_cast<size_t>(&__interrupt_vector_table) & ~0x7F) |*/ (1 << 2) | (0b11 /* Default from Documentation */),
 			},
 	};
 };
 
 extern "C" [[gnu::used, gnu::section(".dcd")]] const dcd_t __dcd = {};
 
-extern "C"
-	[[gnu::used, gnu::section(".imageVectorTable")]] const nxp::imxrt1060::image_vector_table_t __image_vector_table = {
+extern "C" [[gnu::used, gnu::section(".imageVectorTable")]] const nxp::imxrt1060::image_vector_table_t __image_vector_table = {
 #if NXP_IVT == 0x43
-		.entryPoint = &__main,
+	.entryPoint = &__main,
 #else
-		.entryPoint = &arm::v7::nvic::interrupt_vector_table,
+	.entryPoint = &arm::v7::nvic::interrupt_vector_table,
 #endif
-		// ToDo: Use DCD to set up FlexRAM and similar static GPR stuff.
-		.dcd      = reinterpret_cast<decltype(nxp::imxrt1060::image_vector_table_t::dcd)>(&__dcd),
-		.bootData = &__boot_data,
-		.self     = &__image_vector_table,
+	// ToDo: Use DCD to set up FlexRAM and similar static GPR stuff.
+	.dcd      = reinterpret_cast<decltype(nxp::imxrt1060::image_vector_table_t::dcd)>(&__dcd),
+	.bootData = &__boot_data,
+	.self     = &__image_vector_table,
 };
