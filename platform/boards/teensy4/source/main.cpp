@@ -43,10 +43,7 @@ void __main(void) noexcept
 {
 	// This is done via DCD as well, but just to be safe on reset, we do it again here.
 	// GPR17: Set FLEXRAM_BANK_CFG
-	asm volatile("str %[val], %[gpr]"
-				 : [gpr] "=g"(__IMXRT1060_IOMUXC_GPR17)
-				 : [val] "r"(&__flexram_bank_config)
-				 : "memory");
+	asm volatile("str %[val], %[gpr]" : [gpr] "=g"(__IMXRT1060_IOMUXC_GPR17) : [val] "r"(&__flexram_bank_config) : "memory");
 
 	// This is done via DCD as well, but just to be safe on reset, we do it again here.
 	// GPR16: Set v7_INIT_VTOR, and FLEXRAM_BANK_CFG_SEL
@@ -58,8 +55,7 @@ void __main(void) noexcept
 		"orr %[v7_init_vtor], %[v7_init_vtor], %[flexram_bank_cfg_sel];"
 		"str %[v7_init_vtor], %[gpr16];"
 		: [gpr16] "=g"(__IMXRT1060_IOMUXC_GPR16), [vtor] "=g"(__ARMV7_VTOR)
-		: [flexram_bank_cfg_sel] "ir"(0x00000007), [v7_init_vtor_bic] "ir"(0x7F),
-		  [v7_init_vtor] "r"(arm::v7::nvic::interrupt_vector_table_ptr)
+		: [flexram_bank_cfg_sel] "ir"(0x00000007), [v7_init_vtor_bic] "ir"(0x7F), [v7_init_vtor] "r"(arm::v7::nvic::interrupt_vector_table_ptr)
 		: "r0", "memory");
 
 	// Reset the stack pointer if we somehow ended up back here unexpectedly.
@@ -96,6 +92,8 @@ void _main(void) noexcept
 {
 	while (true) {
 		{ // Initialize Memory
+			// This must be first, always. We can't guarantee that a compiler correctly implements attributes.
+
 			{ // Initialize ITCM area
 				boot_memcpy(BOARD_ITCM_START, BOARD_ITCM_FLASH, BOARD_ITCM_LENGTH);
 			}
@@ -106,12 +104,10 @@ void _main(void) noexcept
 				if (false) { // Optionally, zero out BSS, TBSS, SBSS, EH_Frame, etc...
 					extern std::size_t __bss_start; // BSS Start
 					extern std::size_t __bss_end; // BSS End
-					boot_memset(&__bss_start, 0x00,
-								reinterpret_cast<std::size_t>(((size_t)&__bss_end - (size_t)&__bss_start)));
+					boot_memset(&__bss_start, 0x00, reinterpret_cast<std::size_t>(((size_t)&__bss_end - (size_t)&__bss_start)));
 					extern std::size_t __tbss_start; // BSS Start
 					extern std::size_t __tbss_end; // BSS End
-					boot_memset(&__tbss_start, 0x00,
-								reinterpret_cast<std::size_t>((size_t)&__tbss_end - (size_t)&__tbss_start));
+					boot_memset(&__tbss_start, 0x00, reinterpret_cast<std::size_t>((size_t)&__tbss_end - (size_t)&__tbss_start));
 					extern std::size_t __eh_frame_start; // BSS Start
 					extern std::size_t __eh_frame_length; // BSS End
 					boot_memset(&__eh_frame_start, 0x00, reinterpret_cast<std::size_t>(&__eh_frame_length));
@@ -133,19 +129,39 @@ void _main(void) noexcept
 			}
 		}
 
-		{ // Initialize Hardware Features - either this, or deal with forgetting [[gnu::always_inline]]...
-			{ // Enable all caches.
+		{ // Initialize Hardware Features
+			{ // Enable data cache.
 				arm::v7::cache::data::enable();
+				arm::v7::data_synchronization_barrier();
+			}
+
+			{ // Enable instruction cache.
 				arm::v7::cache::instruction::enable();
+				arm::v7::instruction_synchronization_barrier();
 			}
 
 			{ // Enable any available Floating Point Units.
 				arm::v7::fpu::enable(); // This is a NOP if it's not supported.
 			}
 
-			{ // Enable Sleep and Deep Sleep
-				arm::v7::SCR = ((1 << 4 /* Wake Up on Pending Event*/) | (1 << 2 /* Allow using Deep Sleep state */)
-								| (1 << 1 /* Return to Sleep when exiting Interrupt Service Routine (ISR) */));
+			{ // Set up Clocks to use OSC_CLK (24mHz)
+				// PIT & GPT
+				nxp::imxrt1060::CCM_CSCMR1 = (static_cast<size_t>(nxp::imxrt1060::CCM_CSCMR1) & ((1 << 7) - 1) /* Ignore existing PERCLKI_ sections */) | (1 << 6 /* Use OSC_CLK */) | (0 /* Divide OSC_CLK by 1 */);
+
+				// UART
+				nxp::imxrt1060::CCM_CSCDR1 = (static_cast<size_t>(nxp::imxrt1060::CCM_CSCDR1) & ((1 << 7) - 1) /* Ignore existing UART_CLK_ sections */) | (1 << 6 /* Use OSC_CLK */) | (0 /* Divide OSC_CLK by 1 */);
+			}
+
+			{ // Enable Exception Handling
+				arm::v7::SHCSR = size_t(arm::v7::SHCSR) | (1 << 18 /* UsageFault */) | (1 << 17 /* BusFault*/) | (1 << 16 /* MemManage */);
+			}
+
+			{ // Enable Sleep and Deep Sleep (Power Saving)
+				// These seem to break with exceptions, like as if there's a 2nd Interrupt handler.
+
+				//arm::v7::SCR = ((1 << 4 /* Wake Up on Pending Event*/) | (1 << 2 /* Allow using Deep Sleep state */) | (0 << 1 /* Return to Sleep when exiting Interrupt Service Routine (ISR) */));
+
+				//nxp::imxrt1060::CCM_CLPCR =					static_cast<size_t>(nxp::imxrt1060::CCM_CLPCR) | (1 << 22 /* WFI triggers WAIT mode */);
 			}
 
 			{ // Block until sychronized
@@ -153,18 +169,6 @@ void _main(void) noexcept
 				arm::v7::data_synchronization_barrier();
 				arm::v7::memory_synchronization_barrier();
 			}
-		}
-
-		{ // Do apparently nothing.
-			// - Reduce bias current by 30% on ACMP1, ACMP3.
-			// - Increase bias current by 30% on ACMP1, ACMP3.
-			nxp::imxrt1060::IOMUXC_GPR14 = 0b101010100000000000000000;
-		}
-
-		{ // Block until sychronized
-			arm::v7::instruction_synchronization_barrier();
-			arm::v7::data_synchronization_barrier();
-			arm::v7::memory_synchronization_barrier();
 		}
 
 		{ // Run main code.

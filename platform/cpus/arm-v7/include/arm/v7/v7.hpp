@@ -28,10 +28,17 @@ namespace arm::v7 {
 	static register_read_write<0xE000E018> SYST_CVR;
 	static register_read<0xE000E01C>       SYST_CALIB;
 
-	struct [[gnu::packed, gnu::aligned(1)]] nvic_iser_t {
+	struct [[gnu::packed, gnu::aligned(1)]] nvic_state_t {
 		union {
 			bool   status[32];
 			size_t value;
+		};
+	};
+
+	struct [[gnu::packed, gnu::aligned(1)]] nvic_priority_t {
+		union {
+			uint8_t priority[4];
+			size_t  value;
 		};
 	};
 
@@ -52,13 +59,6 @@ namespace arm::v7 {
 	static register_read_write<0xE000E138> NVIC_ISER14;
 	static register_read_write<0xE000E13C> NVIC_ISER15;
 
-	struct [[gnu::packed, gnu::aligned(1)]] nvic_icer_t {
-		union {
-			bool   status[32];
-			size_t value;
-		};
-	};
-
 	static register_read_write<0xE000E180> NVIC_ICER0;
 	static register_read_write<0xE000E184> NVIC_ICER1;
 	static register_read_write<0xE000E188> NVIC_ICER2;
@@ -75,13 +75,6 @@ namespace arm::v7 {
 	static register_read_write<0xE000E1B4> NVIC_ICER13;
 	static register_read_write<0xE000E1B8> NVIC_ICER14;
 	static register_read_write<0xE000E1BC> NVIC_ICER15;
-
-	struct [[gnu::packed, gnu::aligned(1)]] nvic_ispr_t {
-		union {
-			bool   status[32];
-			size_t value;
-		};
-	};
 
 	static register_read_write<0xE000E200> NVIC_ISPR0;
 	static register_read_write<0xE000E204> NVIC_ISPR1;
@@ -100,13 +93,6 @@ namespace arm::v7 {
 	static register_read_write<0xE000E238> NVIC_ISPR14;
 	static register_read_write<0xE000E23C> NVIC_ISPR15;
 
-	struct [[gnu::packed, gnu::aligned(1)]] nvic_icpr_t {
-		union {
-			bool   status[32];
-			size_t value;
-		};
-	};
-
 	static register_read_write<0xE000E280> NVIC_ICPR0;
 	static register_read_write<0xE000E284> NVIC_ICPR1;
 	static register_read_write<0xE000E288> NVIC_ICPR2;
@@ -124,13 +110,6 @@ namespace arm::v7 {
 	static register_read_write<0xE000E2B8> NVIC_ICPR14;
 	static register_read_write<0xE000E2BC> NVIC_ICPR15;
 
-	struct [[gnu::packed, gnu::aligned(1)]] nvic_iabr_t {
-		union {
-			bool   status[32];
-			size_t value;
-		};
-	};
-
 	static register_read<0xE000E300> NVIC_IABR0;
 	static register_read<0xE000E304> NVIC_IABR1;
 	static register_read<0xE000E308> NVIC_IABR2;
@@ -147,13 +126,6 @@ namespace arm::v7 {
 	static register_read<0xE000E334> NVIC_IABR13;
 	static register_read<0xE000E338> NVIC_IABR14;
 	static register_read<0xE000E33C> NVIC_IABR15;
-
-	struct [[gnu::packed, gnu::aligned(1)]] nvic_ipr_t {
-		union {
-			uint8_t priority[4];
-			size_t  value;
-		};
-	};
 
 	static register_read_write<0xE000E400> NVIC_IPR0;
 	static register_read_write<0xE000E404> NVIC_IPR1;

@@ -17,7 +17,7 @@
 # Basic Formatting
 TabWidth: 4
 UseTab: ForContinuationAndIndentation
-ColumnLimit: 120
+ColumnLimit: 4194304
 #- 0 does not respect the original line breaks!
 
 # Language
