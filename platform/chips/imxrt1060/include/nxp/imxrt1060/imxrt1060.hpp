@@ -55,6 +55,103 @@ namespace nxp::imxrt1060 {
 	static register_read_write<0x400AC084> IOMUXC_GPR33;
 	static register_read_write<0x400AC088> IOMUXC_GPR34;
 
+	static register_read_write<0x400D8000> CCM_ANALOG_PLL_ARM;
+	static register_read_write<0x400D8004> CCM_ANALOG_PLL_ARM_SET;
+	static register_read_write<0x400D8008> CCM_ANALOG_PLL_ARM_CLR;
+	static register_read_write<0x400D800C> CCM_ANALOG_PLL_ARM_TOG;
+
+	static register_read_write<0x400D8010> CCM_ANALOG_PLL_USB1;
+	static register_read_write<0x400D8014> CCM_ANALOG_PLL_USB1_SET;
+	static register_read_write<0x400D8018> CCM_ANALOG_PLL_USB1_CLR;
+	static register_read_write<0x400D801C> CCM_ANALOG_PLL_USB1_TOG;
+
+	static register_read_write<0x400D8020> CCM_ANALOG_PLL_USB2;
+	static register_read_write<0x400D8024> CCM_ANALOG_PLL_USB2_SET;
+	static register_read_write<0x400D8028> CCM_ANALOG_PLL_USB2_CLR;
+	static register_read_write<0x400D802C> CCM_ANALOG_PLL_USB2_TOG;
+
+	static register_read_write<0x400D8030> CCM_ANALOG_PLL_SYS;
+	static register_read_write<0x400D8034> CCM_ANALOG_PLL_SYS_SET;
+	static register_read_write<0x400D8038> CCM_ANALOG_PLL_SYS_CLR;
+	static register_read_write<0x400D803C> CCM_ANALOG_PLL_SYS_TOG;
+	static register_read_write<0x400D8040> CCM_ANALOG_PLL_SYS_SS;
+	static register_read_write<0x400D8050> CCM_ANALOG_PLL_SYS_NUM;
+	static register_read_write<0x400D8060> CCM_ANALOG_PLL_SYS_DENOM;
+
+	static register_read_write<0x400D8070> CCM_ANALOG_PLL_AUDIO;
+	static register_read_write<0x400D8074> CCM_ANALOG_PLL_AUDIO_SET;
+	static register_read_write<0x400D8078> CCM_ANALOG_PLL_AUDIO_CLR;
+	static register_read_write<0x400D807C> CCM_ANALOG_PLL_AUDIO_TOG;
+	static register_read_write<0x400D8080> CCM_ANALOG_PLL_AUDIO_NUM;
+	static register_read_write<0x400D8090> CCM_ANALOG_PLL_AUDIO_DENOM;
+
+	static register_read_write<0x400D80A0> CCM_ANALOG_PLL_VIDEO;
+	static register_read_write<0x400D80A4> CCM_ANALOG_PLL_VIDEO_SET;
+	static register_read_write<0x400D80A8> CCM_ANALOG_PLL_VIDEO_CLR;
+	static register_read_write<0x400D80AC> CCM_ANALOG_PLL_VIDEO_TOG;
+	static register_read_write<0x400D80B0> CCM_ANALOG_PLL_VIDEO_NUM;
+	static register_read_write<0x400D80C0> CCM_ANALOG_PLL_VIDEO_DENOM;
+
+	static register_read_write<0x400D80E0> CCM_ANALOG_PLL_ENET;
+	static register_read_write<0x400D80E4> CCM_ANALOG_PLL_ENET_SET;
+	static register_read_write<0x400D80E8> CCM_ANALOG_PLL_ENET_CLR;
+	static register_read_write<0x400D80EC> CCM_ANALOG_PLL_ENET_TOG;
+
+	static register_read_write<0x400D80F0> CCM_ANALOG_PFD_480;
+	static register_read_write<0x400D80F4> CCM_ANALOG_PFD_480_SET;
+	static register_read_write<0x400D80F8> CCM_ANALOG_PFD_480_CLR;
+	static register_read_write<0x400D80FC> CCM_ANALOG_PFD_480_TOG;
+
+	static register_read_write<0x400D8100> CCM_ANALOG_PFD_528;
+	static register_read_write<0x400D8104> CCM_ANALOG_PFD_528_SET;
+	static register_read_write<0x400D8108> CCM_ANALOG_PFD_528_CLR;
+	static register_read_write<0x400D810C> CCM_ANALOG_PFD_528_TOG;
+
+	static register_read_write<0x400D8150> CCM_ANALOG_MISC0;
+	static register_read_write<0x400D8154> CCM_ANALOG_MISC0_SET;
+	static register_read_write<0x400D8158> CCM_ANALOG_MISC0_CLR;
+	static register_read_write<0x400D815C> CCM_ANALOG_MISC0_TOG;
+
+	static register_read_write<0x400D8160> CCM_ANALOG_MISC1;
+	static register_read_write<0x400D8164> CCM_ANALOG_MISC1_SET;
+	static register_read_write<0x400D8168> CCM_ANALOG_MISC1_CLR;
+	static register_read_write<0x400D816C> CCM_ANALOG_MISC1_TOG;
+
+	static register_read_write<0x400D8170> CCM_ANALOG_MISC2;
+	static register_read_write<0x400D8174> CCM_ANALOG_MISC2_SET;
+	static register_read_write<0x400D8178> CCM_ANALOG_MISC2_CLR;
+	static register_read_write<0x400D817C> CCM_ANALOG_MISC2_TOG;
+
+	static register_read_write<0x400FC000> CCM_CCR;
+	static register_read<0x400FC008>       CCM_CSR;
+	static register_read_write<0x400FC00C> CCM_CCSR;
+	static register_read_write<0x400FC010> CCM_CACRR;
+	static register_read_write<0x400FC014> CCM_CBCDR;
+	static register_read_write<0x400FC018> CCM_CBCMR;
+	static register_read_write<0x400FC01C> CCM_CSCMR1;
+	static register_read_write<0x400FC020> CCM_CSCMR2;
+	static register_read_write<0x400FC024> CCM_CSCDR1;
+	static register_read_write<0x400FC028> CCM_CS1CDR;
+	static register_read_write<0x400FC02C> CCM_CS2CDR;
+	static register_read_write<0x400FC030> CCM_CDCDR;
+	static register_read_write<0x400FC038> CCM_CSCDR2;
+	static register_read_write<0x400FC03C> CCM_CSCDR3;
+	static register_read<0x400FC048>       CCM_CDHIPR;
+	static register_read_write<0x400FC054> CCM_CLPCR;
+	static register_read_write<0x400FC058> CCM_CISR;
+	static register_read_write<0x400FC05C> CCM_CIMR;
+	static register_read_write<0x400FC060> CCM_CCOSR;
+	static register_read_write<0x400FC064> CCM_CGPR;
+	static register_read_write<0x400FC068> CCM_CCGR0;
+	static register_read_write<0x400FC06C> CCM_CCGR1;
+	static register_read_write<0x400FC070> CCM_CCGR2;
+	static register_read_write<0x400FC074> CCM_CCGR3;
+	static register_read_write<0x400FC078> CCM_CCGR4;
+	static register_read_write<0x400FC07C> CCM_CCGR5;
+	static register_read_write<0x400FC080> CCM_CCGR6;
+	static register_read_write<0x400FC084> CCM_CCGR7;
+	static register_read_write<0x400FC088> CCM_CMEOR;
+
 	template<std::intptr_t address>
 	struct gpio_block {
 		// gpio::state[sizeof(size_t)] Varies by IOMUXC mode, but either reads itself or the status of the signal.
