@@ -143,6 +143,11 @@ void _main(void) noexcept
 				arm::v7::fpu::enable(); // This is a NOP if it's not supported.
 			}
 
+			{ // Enable Sleep and Deep Sleep
+				arm::v7::SCR = ((1 << 4 /* Wake Up on Pending Event*/) | (1 << 2 /* Allow using Deep Sleep state */)
+								| (1 << 1 /* Return to Sleep when exiting Interrupt Service Routine (ISR) */));
+			}
+
 			{ // Block until sychronized
 				arm::v7::instruction_synchronization_barrier();
 				arm::v7::data_synchronization_barrier();
@@ -154,16 +159,6 @@ void _main(void) noexcept
 			// - Reduce bias current by 30% on ACMP1, ACMP3.
 			// - Increase bias current by 30% on ACMP1, ACMP3.
 			nxp::imxrt1060::IOMUXC_GPR14 = 0b101010100000000000000000;
-		}
-
-		{ // Enable SysTick timer support.
-			size_t ten_milliseconds;
-			//			if (arm::v7::systick::calibrated(ten_milliseconds)) {
-			//				arm::v7::systick::reset_value(ten_milliseconds * 100);
-
-			//				arm::v7::systick::control(true, true, arm::v7::systick::clock_source::INTERNAL);
-			//			} else {
-			//			}
 		}
 
 		{ // Block until sychronized
