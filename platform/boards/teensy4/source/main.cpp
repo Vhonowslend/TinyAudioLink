@@ -144,7 +144,12 @@ void _main(void) noexcept
 				arm::v7::fpu::enable(); // This is a NOP if it's not supported.
 			}
 
-			{ // Set up Clocks to use OSC_CLK (24mHz)
+			{ // Set up Clocks & Timers
+				// ARM Clock (this is an overclock, oops.)
+				//nxp::imxrt1060::CCM_CACRR = (static_cast<size_t>(nxp::imxrt1060::CCM_CACRR) & ((1 << 3) - 1)) | (0 /* Divide by 1 */;
+				//			nxp::imxrt1060::CCM_ANALOG_PLL_ARM_CLR = 0b11
+				//nxp::imxrt1060::CCM_ANALOG_PLL_ARM =
+
 				// PIT & GPT
 				nxp::imxrt1060::CCM_CSCMR1 = (static_cast<size_t>(nxp::imxrt1060::CCM_CSCMR1) & ((1 << 7) - 1) /* Ignore existing PERCLKI_ sections */) | (1 << 6 /* Use OSC_CLK */) | (0 /* Divide OSC_CLK by 1 */);
 
@@ -152,16 +157,14 @@ void _main(void) noexcept
 				nxp::imxrt1060::CCM_CSCDR1 = (static_cast<size_t>(nxp::imxrt1060::CCM_CSCDR1) & ((1 << 7) - 1) /* Ignore existing UART_CLK_ sections */) | (1 << 6 /* Use OSC_CLK */) | (0 /* Divide OSC_CLK by 1 */);
 			}
 
-			{ // Enable Exception Handling
+			{ // Enable & Initialize Exception Handling
 				arm::v7::SHCSR = size_t(arm::v7::SHCSR) | (1 << 18 /* UsageFault */) | (1 << 17 /* BusFault*/) | (1 << 16 /* MemManage */);
+
+				arm::v7::nvic::initialize();
 			}
 
 			{ // Enable Sleep and Deep Sleep (Power Saving)
-				// These seem to break with exceptions, like as if there's a 2nd Interrupt handler.
-
-				//arm::v7::SCR = ((1 << 4 /* Wake Up on Pending Event*/) | (1 << 2 /* Allow using Deep Sleep state */) | (0 << 1 /* Return to Sleep when exiting Interrupt Service Routine (ISR) */));
-
-				//nxp::imxrt1060::CCM_CLPCR =					static_cast<size_t>(nxp::imxrt1060::CCM_CLPCR) | (1 << 22 /* WFI triggers WAIT mode */);
+				//arm::v7::SCR = ((1 << 4 /* Wake Up on Pending Event*/) | (1 << 2 /* Allow using Deep Sleep state */) | (1 << 1 /* Return to Sleep when exiting Interrupt Service Routine (ISR) */));
 			}
 
 			{ // Block until sychronized

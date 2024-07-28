@@ -8,12 +8,16 @@ namespace arm::v7::systick {
 		 *
 		 * Due to the way ARM has designed these CPUs, the internal clock is tied to the processor frequency,
 		 * thus making them extremely inaccurate in over-/underclocking, sleep states, and similar behavior.
+		 * The accuracy of this timer depends on the SoC, however it appears to be limited to the same maximum
+		 * accuracy as the internal clock.
 		 */
 		EXTERNAL = 0,
+
 		/** Use the internal clock.
 		 *
 		 * The internal clock is susceptible to drift from over- & underclocking, entering/leaving sleep,
-		 * spending too much time in interrupts, etc. 
+		 * spending too much time in interrupts, etc. The actual frequency of the timer is unclear, and
+		 * appears to vary from cpu to cpu, though usually appears to be a 10mHz clock.
 		 */
 		INTERNAL = 1,
 	};

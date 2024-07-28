@@ -27,7 +27,17 @@ extern "C" [[gnu::used, gnu::section(".bootData")]] const nxp::imxrt1060::boot_d
 	//
 	// Additionally, __main is responsible for resetting the state of the SoC anyway, so this does
 	// what we want at all times.
-	.reset = reinterpret_cast<arm::v7::nvic::function_t>(&__main),
+	.reset                  = reinterpret_cast<arm::v7::nvic::function_t>(&__main),
+	.non_maskable_interrupt = reinterpret_cast<arm::v7::nvic::function_t>(&arm::v7::nvic::default_interrupt),
+	.hard_fault             = reinterpret_cast<arm::v7::nvic::function_t>(&arm::v7::nvic::default_interrupt),
+	.mem_manage             = reinterpret_cast<arm::v7::nvic::function_t>(&arm::v7::nvic::default_interrupt),
+	.bus_fault              = reinterpret_cast<arm::v7::nvic::function_t>(&arm::v7::nvic::default_interrupt),
+	.usage_fault            = reinterpret_cast<arm::v7::nvic::function_t>(&arm::v7::nvic::default_interrupt),
+	.supervisor_call        = reinterpret_cast<arm::v7::nvic::function_t>(&arm::v7::nvic::default_interrupt),
+	.debug_monitor          = reinterpret_cast<arm::v7::nvic::function_t>(&arm::v7::nvic::default_interrupt),
+	.async_supervisor_call  = reinterpret_cast<arm::v7::nvic::function_t>(&arm::v7::nvic::default_interrupt),
+	.systick                = reinterpret_cast<arm::v7::nvic::function_t>(&arm::v7::nvic::default_interrupt),
+	.external               = {reinterpret_cast<arm::v7::nvic::function_t>(&arm::v7::nvic::default_interrupt)},
 };
 void* arm::v7::nvic::interrupt_vector_table_ptr = reinterpret_cast<void*>(&arm::v7::nvic::interrupt_vector_table);
 

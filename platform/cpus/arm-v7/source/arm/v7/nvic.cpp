@@ -3,6 +3,17 @@
 #import "cinttypes"
 #import "cstddef"
 
+[[gnu::interrupt]]
+void arm::v7::nvic::default_interrupt()
+{}
+
+void arm::v7::nvic::initialize()
+{
+	for (size_t idx = 0, edx = arm::v7::ICTR; idx < edx; ++idx) {
+		arm::v7::nvic::interrupt_vector_table.interrupts[idx] = &default_interrupt;
+	}
+}
+
 void arm::v7::nvic::enable(arm::v7::nvic::identifier_t id, arm::v7::nvic::priority_t priority, arm::v7::nvic::function_t fn)
 {
 	size_t idx = static_cast<size_t>(id);
@@ -16,7 +27,7 @@ void arm::v7::nvic::enable(arm::v7::nvic::identifier_t id, arm::v7::nvic::priori
 	if (idx < 4) {
 		// Stack, Reset, NMI and HardFault are non-configurable and non-maskable.
 	} else if (idx < 16) {
-		// System Interrupt 4 to 15
+		// System Interrupt 4 to 15, configurable, but non-maskable
 		size_t idx = idx - 4;
 
 		// Set Priority
@@ -98,9 +109,9 @@ arm::v7::nvic::critical_section::critical_section()
 	asm volatile("mrs %[v], primask" : [v] "=r"(_old_primask));
 	asm volatile("msr primask, %[v]" : : [v] "r"(1));
 
-	asm volatile("mrs %[v], faultmask" : [v] "=r"(_old_faultmask));
-	asm volatile("msr faultmask, %[v]" : : [v] "r"(1));
-
 	asm volatile("mrs %[v], basepri" : [v] "=r"(_old_basepri));
 	asm volatile("msr basepri, %[v]" : : [v] "r"(0xFF));
+
+	asm volatile("mrs %[v], faultmask" : [v] "=r"(_old_faultmask));
+	asm volatile("msr faultmask, %[v]" : : [v] "r"(1));
 }

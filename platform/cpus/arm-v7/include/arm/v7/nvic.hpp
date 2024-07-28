@@ -7,6 +7,8 @@
 namespace arm::v7::nvic {
 	typedef void (*function_t)(void);
 
+	void default_interrupt();
+
 	/** Interrupt Vector Table
 	 * - Must be aligned to the nearest larger power of two boundary larger than itself.
 	 * - At boot, all entries except initial_stack_pointer MUST be zero, or the CPU will crash.
@@ -15,8 +17,10 @@ namespace arm::v7::nvic {
 	 */
 	struct [[gnu::packed, gnu::aligned(1)]] interrupt_vector_table_t {
 		union {
+			function_t interrupts[496] = {0};
+
 			[[gnu::packed, gnu::aligned(1)]] struct {
-				const void* initial_stack_pointer; // Id 0, not used beyond reboot.
+				const void* initial_stack_pointer; // Main Stack Pointer (SP_main, MSP)
 
 				// Exceptions
 				function_t reset; // Id 1
@@ -35,8 +39,6 @@ namespace arm::v7::nvic {
 				function_t systick; // Id 15?!
 				function_t external[480]; // 16..496
 			};
-
-			function_t interrupts[496] = {0};
 		};
 	};
 
@@ -74,6 +76,9 @@ namespace arm::v7::nvic {
 		LOW      = 0b1101'1111,
 		IDLE     = 0b1111'1111,
 	};
+
+	[[gnu::always_inline]]
+	void initialize();
 
 	[[gnu::always_inline]]
 	void enable(identifier_t id, priority_t priority, function_t handler);

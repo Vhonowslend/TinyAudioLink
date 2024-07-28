@@ -1,0 +1,20 @@
+Threading is theoretically possible on ARMv7, as it has a separate stack pointer: SP_main (MSP), SP_process (PSP). It's not quite clear how exactly this would work right now.
+
+Create new thread:
+1. Try and find a free thread slot, thinking of limiting this to a configurable maximum.
+2. Allocate the stack for the thread, probably configurable. Should reside in DTCM or IRAM?
+
+Entering Thread:
+1. Swap Context State to Thread Mode, Unprivileged
+2. Restore Stack Pointer for thread
+3. Restore FPU state (ARM does not automatically save this)
+4. return from interrupt?
+
+Leaving thread:
+1. Store FPU state (FPU doesn't do this by itself)
+2. Store Stack Pointer in thread info
+3. Swap context state to next thread, or back to main handler.
+4. return from interrupt?
+
+
+
