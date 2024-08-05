@@ -25,29 +25,29 @@ namespace arm::v7::systick {
 	/** Is an external reference clock supported?
 	 */
 	[[gnu::always_inline]]
-	bool supports_external_clock();
+	bool supports_external_clock() noexcept;
 
 	[[gnu::always_inline]]
-	bool calibrated(size_t& ten_milliseconds);
+	bool calibrated(size_t& ten_milliseconds) noexcept;
 
 	[[gnu::always_inline]]
-	size_t reset_value();
+	size_t reset_value() noexcept;
 
 	[[gnu::always_inline]]
-	void reset_value(size_t value);
+	void reset_value(size_t value) noexcept;
 
 	[[gnu::always_inline]]
-	size_t value();
+	size_t value() noexcept;
 
 	[[gnu::always_inline]]
-	void value(size_t value);
+	void value(size_t value) noexcept;
 
 	[[gnu::always_inline]]
-	bool enabled();
+	bool enabled() noexcept;
 
 	[[gnu::always_inline]]
-	bool interrupt_enabled();
+	bool interrupt_enabled() noexcept;
 
 	[[gnu::always_inline]]
-	void control(bool enable, bool interrupt, clock_source source);
+	void control(bool enable, bool interrupt, clock_source source) noexcept;
 } // namespace arm::v7::systick

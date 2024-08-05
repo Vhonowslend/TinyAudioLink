@@ -15,32 +15,50 @@
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #pragma once
-#include <cinttypes>
-#include <cstddef>
+#import "cinttypes"
+#import "cstddef"
 
-template<std::uintptr_t address>
+template<uintptr_t address>
 struct register_unknown {
 public:
-	static volatile inline std::uintptr_t& ref = *reinterpret_cast<std::uintptr_t*>(address);
+	static volatile inline size_t& ref = *reinterpret_cast<size_t*>(address);
 
 protected:
+	template<typename _T>
 	[[gnu::always_inline]]
 	register_unknown&
-		operator=(std::size_t value)
+		operator=(_T value) noexcept
 	{
 		ref = value;
 		return *this;
 	}
 
+	template<typename _T>
 	[[gnu::always_inline]]
 	register_unknown&
-		operator|=(std::size_t value)
+		operator|=(_T value) noexcept
 	{
 		ref |= value;
 		return *this;
 	}
 
-	[[gnu::always_inline]] operator std::size_t() const
+	template<typename _T>
+	[[gnu::always_inline]]
+	register_unknown&
+		operator&=(_T value) noexcept
+	{
+		ref &= value;
+		return *this;
+	}
+
+	template<typename _T>
+	[[gnu::always_inline]] operator _T() const noexcept
+	{
+		return static_cast<_T>(ref);
+	}
+
+	template<typename _T>
+	[[gnu::always_inline]] operator size_t() const noexcept
 	{
 		return ref;
 	}
@@ -49,95 +67,74 @@ protected:
 template<std::uintptr_t address>
 struct register_read_write : public register_unknown<address> {
 public:
-	template<typename T>
-	[[gnu::always_inline]] operator T() const
+	template<typename _T>
+	[[gnu::always_inline]] operator _T() const noexcept
 	{
-		return register_unknown<address>::operator T();
+		return register_unknown<address>::operator _T();
 	}
 
-	[[gnu::always_inline]] operator std::size_t() const
-	{
-		return register_unknown<address>::operator std::size_t();
-	}
-
-	template<typename T>
+	template<typename _T>
 	[[gnu::always_inline]]
 	register_read_write&
-		operator=(T value)
+		operator=(_T value) noexcept
 	{
 		return static_cast<register_read_write&>(register_unknown<address>::operator=(value));
 	}
 
+	template<typename _T>
 	[[gnu::always_inline]]
 	register_read_write&
-		operator=(std::size_t value)
-	{
-		return static_cast<register_read_write&>(register_unknown<address>::operator=(value));
-	}
-
-	template<typename T>
-	[[gnu::always_inline]]
-	register_read_write&
-		operator|=(T value)
+		operator|=(_T value) noexcept
 	{
 		return static_cast<register_read_write&>(register_unknown<address>::operator|=(value));
 	}
 
+	template<typename _T>
 	[[gnu::always_inline]]
 	register_read_write&
-		operator|=(std::size_t value)
+		operator&=(_T value) noexcept
 	{
-		return static_cast<register_read_write&>(register_unknown<address>::operator|=(value));
+		return static_cast<register_read_write&>(register_unknown<address>::operator&=(value));
 	}
 };
 
 template<std::uintptr_t address>
 struct register_read : public register_unknown<address> {
 public:
-	register_read& operator=(std::size_t value) = delete;
+	template<typename _T>
+	register_read& operator=(_T value) = delete;
 
-	template<typename T>
-	[[gnu::always_inline]] operator T() const
+	template<typename _T>
+	[[gnu::always_inline]] operator _T() const noexcept
 	{
-		return register_unknown<address>::operator T();
-	}
-
-	[[gnu::always_inline]] operator std::size_t() const
-	{
-		return register_unknown<address>::operator size_t();
+		return register_unknown<address>::operator _T();
 	}
 };
 
 template<std::uintptr_t address>
 struct register_write : public register_unknown<address> {
 public:
-	template<typename T>
+	template<typename _T>
 	[[gnu::always_inline]]
 	register_write&
-		operator=(T value)
+		operator=(_T value) noexcept
 	{
 		return static_cast<register_write&>(register_unknown<address>::operator=(value));
 	}
 
+	template<typename _T>
 	[[gnu::always_inline]]
 	register_write&
-		operator=(std::size_t value)
-	{
-		return static_cast<register_write&>(register_unknown<address>::operator=(value));
-	}
-
-	template<typename T>
-	[[gnu::always_inline]]
-	register_write&
-		operator|=(T value)
+		operator|=(_T value) noexcept
 	{
 		return static_cast<register_write&>(register_unknown<address>::operator|=(value));
 	}
 
+	template<typename _T>
 	[[gnu::always_inline]]
 	register_write&
-		operator|=(std::size_t value)
+		operator&=(_T value) noexcept
 	{
-		return static_cast<register_write&>(register_unknown<address>::operator|=(value));
+		return static_cast<register_write&>(register_unknown<address>::operator&=(value));
 	}
 };

@@ -5,9 +5,9 @@
 #include "arm/v7/v7.hpp"
 
 namespace arm::v7::nvic {
-	typedef void (*function_t)(void);
+	typedef void (*function_t)(void) noexcept;
 
-	void default_interrupt();
+	void default_interrupt() noexcept;
 
 	/** Interrupt Vector Table
 	 * - Must be aligned to the nearest larger power of two boundary larger than itself.
@@ -78,13 +78,13 @@ namespace arm::v7::nvic {
 	};
 
 	[[gnu::always_inline]]
-	void initialize();
+	void initialize() noexcept;
 
 	[[gnu::always_inline]]
-	void enable(identifier_t id, priority_t priority, function_t handler);
+	void enable(identifier_t id, priority_t priority, function_t handler) noexcept;
 
 	[[gnu::always_inline]]
-	void disable(identifier_t id);
+	void disable(identifier_t id) noexcept;
 
 	/** Critical Section
 	 *
@@ -96,8 +96,8 @@ namespace arm::v7::nvic {
 		uint8_t _old_basepri;
 
 	public:
-		[[gnu::always_inline]] ~critical_section();
+		[[gnu::always_inline]] ~critical_section() noexcept;
 
-		[[gnu::always_inline]] critical_section();
+		[[gnu::always_inline]] critical_section() noexcept;
 	};
 } // namespace arm::v7::nvic
