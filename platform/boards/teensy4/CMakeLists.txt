@@ -14,6 +14,8 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+set(TARGET "${PROJECT_NAME}")
+
 project(Teensy4
 	LANGUAGES C CXX ASM
 )
@@ -40,16 +42,19 @@ if(BOARD_VERSION STREQUAL "4\.1")
 	set(BOARD_FLASH_SIZE_LINK "7936K") # Flash is slightly smaller if we exclude the bootloader
 	set(BOARD_FLASH_SIZE "8388608")
 	set(BOARD_ERAM_SIZE "16777216")
+	set(MCU "TEENSY41")
 elseif(BOARD_VERSION MATCHES "4(\.0)?")
 	set(BOARD_LINK_VERSION "40")
 	set(BOARD_FLASH_SIZE_LINK "1984K")
 	set(BOARD_FLASH_SIZE "2097152")
 	set(BOARD_ERAM_SIZE "0")
+	set(MCU "TEENSY40")
 elseif(BOARD_VERSION STREQUAL "M(icro)?M(od)?")
 	set(BOARD_LINK_VERSION "MM")
 	set(BOARD_FLASH_SIZE_LINK "16128K")
 	set(BOARD_FLASH_SIZE "16777216")
 	set(BOARD_ERAM_SIZE "0")
+	set(MCU "TEENSY_MICROMOD")
 else()
 	message(FATAL_ERROR "This board (Teensy ${BOARD_VERSION}) is not yet supported. Add support for it and contribute to the project!")
 endif()
@@ -93,3 +98,33 @@ configure(${PROJECT_NAME})
 generate_compile_commands_json(TARGETS ${PROJECT_NAME})
 clang_tidy(TARGETS ${PROJECT_NAME} VERSION 15.0.0)
 clang_format(TARGETS ${PROJECT_NAME} VERSION 15.0.0 DEPENDENCY GLOBAL)
+
+# Upload command
+if(CMAKE_HOST_WIN32)
+	set(FURL "https://github.com/Xaymar/teensy_loader_cli/releases/download/2.3.1/Windows.2022.zip")
+	set(FEXT ".exe")
+elseif(CMAKE_HOST_APPLE)
+	set(FURL "https://github.com/Xaymar/teensy_loader_cli/releases/download/2.3.1/MacOS.14.zip")
+	set(FEXT "")
+else()
+	set(FURL "https://github.com/Xaymar/teensy_loader_cli/releases/download/2.3.1/Ubuntu.24.zip")
+	set(FEXT "")
+endif()
+if(NOT EXISTS "${PROJECT_BINARY_DIR}/bin/teensy_loader_cli${FEXT}")
+	set(FDST "${PROJECT_BINARY_DIR}/teensy_loader_cli.zip")
+	file(DOWNLOAD
+		"${FURL}"
+		"${FDST}"
+	)
+	
+	file(ARCHIVE_EXTRACT 
+		INPUT "${FDST}"
+		DESTINATION "${PROJECT_BINARY_DIR}/"
+	)
+endif()
+
+add_custom_target(upload
+	COMMAND "${PROJECT_BINARY_DIR}/bin/teensy_loader_cli${FEXT}" --mcu=${MCU} -w "$<TARGET_FILE_DIR:${TARGET}>/$<TARGET_FILE_BASE_NAME:${TARGET}>.hex"
+	DEPENDS all
+	COMMAND_EXPAND_LISTS
+)
