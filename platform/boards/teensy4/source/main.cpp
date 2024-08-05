@@ -59,7 +59,7 @@ void __main(void) noexcept
 		: "r0", "memory");
 
 	// Reset the stack pointer if we somehow ended up back here unexpectedly.
-	asm volatile("mov sp, %[stack]" : : [stack] "r"(&__stack_start) : "sp", "memory");
+	asm volatile("mov sp, %[stack]" : : [stack] "r"(&__stack_start) : "memory");
 
 	// Wait until everything has synchronized as expected again.
 	asm volatile("isb;dsb;dmb" ::: "memory");
@@ -164,7 +164,7 @@ void _main(void) noexcept
 			}
 
 			{ // Enable Sleep and Deep Sleep (Power Saving)
-				//arm::v7::SCR = ((1 << 4 /* Wake Up on Pending Event*/) | (1 << 2 /* Allow using Deep Sleep state */) | (1 << 1 /* Return to Sleep when exiting Interrupt Service Routine (ISR) */));
+				arm::v7::SCR = (1 << 4 /* Wake Up on Pending Event*/); // | (1 << 2 /* Allow using Deep Sleep state */) | (1 << 1 /* Return to Sleep when exiting Interrupt Service Routine (ISR) */);
 			}
 
 			{ // Block until sychronized

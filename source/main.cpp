@@ -27,11 +27,11 @@ using namespace nxp;
 
 static size_t counter = 0;
 
-[[gnu::interrupt]]
+[[gnu::interrupt, gnu::used]]
 void _int_systick() noexcept
 {
-	nxp::imxrt1060::GPIO2.direction = 0b1000;
-	nxp::imxrt1060::GPIO2.toggle    = 0b1000;
+	//nxp::imxrt1060::GPIO2.direction = 0b1000;
+	//nxp::imxrt1060::GPIO2.toggle    = 0b1000;
 	counter++;
 }
 

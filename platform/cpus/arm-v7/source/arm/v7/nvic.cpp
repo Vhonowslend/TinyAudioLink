@@ -3,7 +3,7 @@
 #import "cinttypes"
 #import "cstddef"
 
-[[gnu::interrupt]]
+[[gnu::interrupt, gnu::used]]
 void arm::v7::nvic::default_interrupt() noexcept
 {}
 
@@ -94,7 +94,7 @@ void arm::v7::nvic::disable(arm::v7::nvic::identifier_t id) noexcept
 
 	// Disable Interrupt
 	volatile std::size_t* rs = (&arm::v7::NVIC_ICER0.ref) + (static_cast<intptr_t>(id) / 32);
-	*rs                      = size_t(1) << (static_cast<intptr_t>(id) % 32); // Only accepts 1, 0s are ignored.
+	*rs                      = size_t(1) << (idx % 32); // Only accepts 1, 0s are ignored.
 }
 
 arm::v7::nvic::critical_section::~critical_section() noexcept

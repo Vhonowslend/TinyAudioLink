@@ -15,10 +15,10 @@ void arm::v7::memory_synchronization_barrier() noexcept
 	__asm volatile("dmb");
 }
 
-void arm::v7::supervisor_call(uint8_t id) noexcept
-{
-	__asm volatile("svc %[id]" : : [id] "ri"(id));
-}
+//void arm::v7::supervisor_call(constexpr uint8_t id) noexcept
+//{
+//	__asm volatile("svc %[id]" : : [id] "i"(id));
+//}
 
 void arm::v7::signal_event() noexcept
 {

@@ -436,8 +436,12 @@ namespace arm::v7 {
 	[[gnu::always_inline]]
 	void memory_synchronization_barrier() noexcept;
 
+	template<uint8_t id>
 	[[gnu::always_inline]]
-	void supervisor_call(uint8_t id) noexcept;
+	constexpr void supervisor_call() noexcept
+	{
+		__asm volatile("svc %[id]" : : [id] "i"(id));
+	}
 
 	[[gnu::always_inline]]
 	void signal_event() noexcept;
