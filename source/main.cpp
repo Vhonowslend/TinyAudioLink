@@ -30,7 +30,7 @@ static size_t counter = 0;
 [[gnu::interrupt, gnu::used]]
 void _int_systick() noexcept
 {
-	nxp::imxrt1060::GPIO2.direction = 0b0000;
+	nxp::imxrt1060::GPIO2.direction = 0b1000;
 	nxp::imxrt1060::GPIO2.toggle    = 0b1000;
 	counter++;
 }
@@ -66,12 +66,12 @@ int main() noexcept
 	bool    last = false;
 	while (true) {
 		// On (for ~10ms)
-		nxp::imxrt1060::GPIO2.data = 0b1000;
-		for (size_t i = 0; i < 600000 * 5; i = i + 1) {
-			asm volatile("nop");
-		}
+		/*nxp::imxrt1060::GPIO2.data = 0b1000;
+		for (size_t i = 0; i < 600000 * 5; i = i + 1) {*/
+		asm volatile("nop");
+		//}
 
-		// Off (for ~10ms)
+		/*// Off (for ~10ms)
 		nxp::imxrt1060::GPIO2.data = 0x0;
 		for (size_t i = 0; i < 600000 * 5; i = i + 1) {
 			asm volatile("nop");
@@ -96,7 +96,7 @@ int main() noexcept
 			for (size_t i = 0; i < 600000 * 300; i = i + 1) {
 				asm volatile("nop");
 			}
-		}
+		}*/
 	}
 
 	while (true) {
