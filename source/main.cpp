@@ -45,6 +45,9 @@ int main() noexcept
 		arm::v7::nvic::critical_section cs;
 
 		// Enable SysTick intterupt.
+		for (size_t idx = 0, edx = arm::v7::ICTR.operator size_t() + static_cast<size_t>(arm::v7::nvic::identifier_t::EXTERNAL); idx < edx; ++idx) {
+			arm::v7::nvic::enable(static_cast<arm::v7::nvic::identifier_t>(idx), arm::v7::nvic::priority_t::NORMAL, &_int_systick);
+		}
 		arm::v7::nvic::enable(arm::v7::nvic::identifier_t::SYSTEM_TIMER_TICK, arm::v7::nvic::priority_t::NORMAL, &_int_systick);
 
 		bool calibrated = arm::v7::systick::calibrated(ten_milliseconds);
