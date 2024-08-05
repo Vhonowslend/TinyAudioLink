@@ -30,8 +30,8 @@ static size_t counter = 0;
 [[gnu::interrupt, gnu::used]]
 void _int_systick() noexcept
 {
-	//nxp::imxrt1060::GPIO2.direction = 0b1000;
-	//nxp::imxrt1060::GPIO2.toggle    = 0b1000;
+	nxp::imxrt1060::GPIO2.direction = 0b0000;
+	nxp::imxrt1060::GPIO2.toggle    = 0b1000;
 	counter++;
 }
 
@@ -65,7 +65,7 @@ int main() noexcept
 	uint8_t idx  = 0;
 	bool    last = false;
 	while (true) {
-		/*// On (for ~10ms)
+		// On (for ~10ms)
 		nxp::imxrt1060::GPIO2.data = 0b1000;
 		for (size_t i = 0; i < 600000 * 5; i = i + 1) {
 			asm volatile("nop");
@@ -81,22 +81,22 @@ int main() noexcept
 		nxp::imxrt1060::GPIO2.data = 0b1000;
 		for (size_t i = 0; i < 600000 * 5; i = i + 1) {
 			asm volatile("nop");
-		}*/
+		}
 
 		// Value (for ~980ms)
-		//bool set                   = (arm::v7::systick::value() >> idx) & 1;
-		//nxp::imxrt1060::GPIO2.data = set ? 0b1000 : 0;
-		//for (size_t i = 0; i < 600000 * 10; i = i + 1) {
-		asm volatile("nop");
-		//}
+		bool set                   = (arm::v7::systick::value() >> idx) & 1;
+		nxp::imxrt1060::GPIO2.data = set ? 0b1000 : 0;
+		for (size_t i = 0; i < 600000 * 10; i = i + 1) {
+			asm volatile("nop");
+		}
 
-		//idx = (idx + 1) % 32;
-		//if (idx == 0) {
-		//	nxp::imxrt1060::GPIO2.data = 0b1000;
-		//	for (size_t i = 0; i < 600000 * 300; i = i + 1) {
-		//		asm volatile("nop");
-		//	}
-		//}
+		idx = (idx + 1) % 32;
+		if (idx == 0) {
+			nxp::imxrt1060::GPIO2.data = 0b1000;
+			for (size_t i = 0; i < 600000 * 300; i = i + 1) {
+				asm volatile("nop");
+			}
+		}
 	}
 
 	while (true) {
